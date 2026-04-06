@@ -1,5 +1,10 @@
 # MoveSignal AI
 
+[![Snowflake](https://img.shields.io/badge/Snowflake-Native_App-29B5E8?logo=snowflake&logoColor=white)](https://www.snowflake.com/)
+[![Python](https://img.shields.io/badge/Python-3.8+-3776AB?logo=python&logoColor=white)](https://python.org)
+[![Streamlit](https://img.shields.io/badge/Streamlit-in_Snowflake-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Status](https://img.shields.io/badge/Status-Competition_Ready-brightgreen)]()
+
 > **Snowflake Korea Hackathon 2026 — Tech Track**
 > 서초·영등포·중구 렌탈/마케팅 배분 의사결정 에이전트
 
@@ -119,6 +124,22 @@ movesignal-ai/
 | `V_APP_HEALTH` | View | 운영 상태 모니터링 |
 | `V_ABLATION_SUMMARY` | View | Ablation MAPE 개선 요약 |
 
+## Prerequisites
+
+- Snowflake account with **ACCOUNTADMIN** role
+- Marketplace datasets: **SPH**, **Richgo**, **AJD** (sponsor data)
+- Warehouse: `COMPUTE_WH` (X-Small)
+- Streamlit in Snowflake enabled
+- Database/Schema: `MOVESIGNAL_AI.ANALYTICS`
+
+```sql
+-- Initial setup
+CREATE DATABASE IF NOT EXISTS MOVESIGNAL_AI;
+CREATE SCHEMA IF NOT EXISTS MOVESIGNAL_AI.ANALYTICS;
+CREATE STAGE IF NOT EXISTS MOVESIGNAL_AI.ANALYTICS.STREAMLIT_STAGE
+  DIRECTORY = (ENABLE = TRUE);
+```
+
 ## Execution Order (Snowflake)
 
 ```sql
@@ -156,6 +177,16 @@ streamlit_app_v7.py
 ## Cost
 
 ~**$80/month** (Compute WH X-Small + Cortex LLM + Streamlit + Dynamic Tables)
+
+## Troubleshooting
+
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| `FEATURE_MART_V2 not found` | Pipeline not executed | Run `02_feature_mart_v4.sql` → `10_external_data.sql` |
+| AI response timeout | Warehouse suspended | `ALTER WAREHOUSE COMPUTE_WH RESUME` |
+| Cortex Search unavailable | Region limitation | Verify Cortex Search availability in your region |
+| Streamlit blank screen | Stage file missing | Re-upload `streamlit_app_v7.py` to `@STREAMLIT_STAGE` |
+| Dynamic Table stale | Task paused | `ALTER TASK TASK_REFRESH_PIPELINE RESUME` |
 
 ## Author
 

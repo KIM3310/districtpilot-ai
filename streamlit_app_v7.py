@@ -56,7 +56,7 @@ def safe_read(sql: str) -> pd.DataFrame:
     """Execute SQL with graceful error handling. Returns empty DataFrame on failure."""
     try:
         return load_df(session, sql)
-    except Exception:
+    except Exception:  # noqa: BLE001 – intentional catch-all for resilient UI
         return pd.DataFrame()
 
 
@@ -429,14 +429,14 @@ CONTEXT:
 def _fallback_complete(prompt: str) -> dict:
     """Fallback to SNOWFLAKE.CORTEX.COMPLETE when AI_COMPLETE is unavailable."""
     try:
-        safe_prompt = prompt.replace("'", "''")
+        safe_prompt = prompt.replace("'", "''").replace("\\", "\\\\")
         rows = session.sql(
             f"SELECT SNOWFLAKE.CORTEX.COMPLETE('{LLM_MODEL}', '{safe_prompt}') AS R"
         ).collect()
         answer = rows[0]["R"] if rows else "응답을 생성하지 못했습니다."
         return {"structured_output": {"answer": answer}}
-    except Exception as fallback_err:
-        return {"structured_output": {"answer": f"AI 호출 실패: {fallback_err}"}}
+    except Exception:  # noqa: BLE001
+        return {"structured_output": {"answer": "AI 호출 실패: 일시적 오류가 발생했습니다. 잠시 후 다시 시도해주세요."}}
 
 
 # ---------------------------------------------------------------------------
