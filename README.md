@@ -1,153 +1,167 @@
 # MoveSignal AI
 
 > **Snowflake Korea Hackathon 2026 — Tech Track**
-> 서초·영등포·중구 렌탈/마케팅 예산 배분 의사결정 엔진
+> 서초·영등포·중구 렌탈/마케팅 배분 의사결정 에이전트
 
-## Overview
+## Problem
 
-MoveSignal AI는 서울 3개 핵심 상권(서초구, 영등포구, 중구)의 렌탈 및 마케팅 예산을 **데이터 기반으로 최적 배분**하는 의사결정 엔진입니다.
+"다음 달 서초·영등포·중구 어디에 어떤 렌탈 상품과 마케팅 예산을 얼마나 넣어야 하는가?"
 
-**100% Snowflake 네이티브** — 데이터 수집부터 ML, AI, 시각화까지 외부 서비스 없이 Snowflake 안에서 동작합니다.
+## Solution
+
+MoveSignal AI는 Snowflake Marketplace 데이터 위에 Semantic View와 Cortex Analyst로 구조화 질의를 처리하고, Snowflake ML Forecast의 검증 지표와 Feature Importance를 근거로 제시하며, AI_COMPLETE Structured Output이 최종 배분 액션을 생성하고, Dynamic Tables와 Tasks로 운영 가능성을 증명하는 **의사결정 에이전트**입니다.
+
+**100% Snowflake Native** — 외부 서비스 없이 Snowflake 안에서 동작합니다.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│              Snowflake Marketplace               │
-│  SPH (유동인구/카드소비/자산)                      │
-│  Richgo (부동산시세/인구이동)                      │
-│  AJD (통신가입)                                   │
-└──────────────┬──────────────────────────────────┘
-               ▼
-┌─────────────────────────────────────────────────┐
-│          Feature Mart (3구 × 60개월)              │
-│  STG_POP → STG_CARD → STG_ASSET                  │
-│  STG_PRICE → STG_MOVE → FEATURE_MART_FINAL       │
-└──────────┬──────────────────────┬───────────────┘
-           ▼                      ▼
-┌──────────────────────┐  ┌───────────────────────┐  ┌───────────────────────┐
-│  Snowflake ML/AI     │  │  Databricks (Cross)   │  │  Palantir Foundry     │
-│  ML FORECAST (3개월)  │  │  Delta Lake tables    │  │  Ontology objects     │
-│  Cortex mistral-large2│  │  MLflow tracking      │  │  Pipeline transforms  │
-│  Streamlit dashboard │  │  Gold KPI (Delta)     │  │  Action workflows     │
-└──────────────────────┘  │  Databricks SQL       │  │  Contour analytics    │
-                          │  Audit log (Delta)    │  │  Decision tracking    │
-                          └───────────────────────┘  └───────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    Data Sources                              │
+│  Marketplace: SPH + Richgo + AJD (스폰서)                    │
+│  External: 공휴일 + 연령구조 + 관광수요 + 상권변화 (공개)       │
+└────────────────────────┬────────────────────────────────────┘
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│            DT_FEATURE_MART (Dynamic Table, 1h lag)           │
+│  STG_POP + STG_CARD + STG_ASSET + STG_PRICE + STG_MOVE      │
+│  + STG_HOLIDAY + STG_DEMOGRAPHICS + STG_TOURISM + STG_COMMERCIAL │
+│  → FEATURE_MART_V2 (3구 × 60개월, 50+ features)              │
+└──────────┬──────────────────────────┬───────────────────────┘
+           ▼                          ▼
+┌────────────────────┐    ┌──────────────────────────────────┐
+│  ML FORECAST       │    │  Semantic View (MOVESIGNAL_SV)   │
+│  Ablation A→E      │    │  Cortex Analyst (SQL generation) │
+│  MAPE/SMAPE/MAE    │    │  Cortex Search (policy docs)     │
+│  Feature Importance│    │  AI_COMPLETE (structured output)  │
+└──────────┬─────────┘    └──────────────┬───────────────────┘
+           ▼                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Streamlit in Snowflake (5 tabs)                 │
+│  Allocation | Analysis | AI Agent | Simulation | Ops/Trust  │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Tri-Platform Strategy
+## Scoring Coverage
 
-| Layer | Snowflake (Primary) | Databricks (Cross-Platform) | Palantir Foundry (Ontology) |
-|-------|--------------------|-----------------------------|----------------------------|
-| Data Ingestion | Marketplace (SPH, Richgo, AJD) | CSV export → Delta Lake | Parquet datasets |
-| Feature Store | `FEATURE_MART_FINAL` table | Delta table (Unity Catalog) | MonthlyFeature objects |
-| ML Forecast | Snowflake ML FORECAST | ExponentialSmoothing + MLflow | DemandForecast objects |
-| AI Agent | Cortex mistral-large2 | — | — |
-| Gold KPI | Snowflake views | Delta gold table | District objects |
-| Decisions | Stored procedures | SQL views | Action-backed workflows |
-| Visualization | Streamlit in Snowflake | Databricks SQL dashboard | Contour boards |
-| Audit | Task log | Delta append-only audit log | Decision tracking |
+| Criteria | Max | How We Cover It |
+|----------|-----|-----------------|
+| Creativity 25 | Forecast + Allocation + Simulation + Dual use case | Ablation, What-if, 민간+공공 |
+| Snowflake expertise 25 | Semantic View, Analyst, Search, Dynamic Tables, Tasks, AI_COMPLETE | Full native stack |
+| AI expertise 25 | Exogenous Forecast + Eval metrics + Feature importance + Grounded AI | Evidence-based agent |
+| Realism 15 | V_APP_HEALTH, target lag, retry, RBAC, query tags | Ops/Trust panel |
+| Presentation 10 | 10-min demo, ROI, execution roadmap | Demo script + PPT |
 
-## Key Features
+## Data Sources
 
-| Feature | Description |
-|---------|------------|
-| **ML Forecast** | Snowflake ML FORECAST로 3개월 수요 예측 (95% 신뢰구간) |
-| **AI Agent** | Cortex mistral-large2 기반 한국어 데이터 분석 에이전트 |
-| **Budget Allocation** | 예측 기반 자동 예산 배분 추천 |
-| **What-if Simulation** | 시나리오별 배분 시뮬레이션 |
-| **One Engine, Two Impacts** | 동일 엔진으로 민간(렌탈/마케팅) + 공공(상권활성화) 활용 |
+### Sponsor (Snowflake Marketplace)
+| Source | Data | Level |
+|--------|------|-------|
+| **SPH** | 유동인구 (거주/직장/방문), 카드소비 (8 카테고리), 자산/소득 | 법정동 → 구 집계 |
+| **Richgo** | 아파트 매매/전세 시세, 인구이동 (전입/전출/순이동) | 시군구 |
+| **AJD** | 통신 가입/계약, 렌탈, 마케팅, CS | 시/군 |
 
-## Data Sources (Snowflake Marketplace)
-
-- **SPH**: 유동인구 (거주/직장/방문), 카드소비 (8개 카테고리), 자산소득
-- **Richgo**: 아파트 매매/전세 시세, 인구이동 (전입/전출/순이동)
-- **AJD**: 통신 가입 데이터 (시/군 단위)
+### External (Public Open Data)
+| Source | Data | License | URL |
+|--------|------|---------|-----|
+| 한국천문연구원 | 공휴일/특일 캘린더 | 공공누리 1유형 | data.go.kr |
+| 행정안전부 | 연령·성별 주민등록 인구 | 공공누리 1유형 | jumin.mois.go.kr |
+| 한국관광 데이터랩 | 관광수요/외래객 지수 | 공공누리 1유형 | datalab.visitkorea.or.kr |
+| 서울시 상권분석서비스 | 상권변화지표 | 공공누리 1유형 | golmok.seoul.go.kr |
 
 ## Project Structure
 
 ```
 movesignal-ai/
 ├── README.md
-├── 02_feature_mart_v4.sql        # Feature Mart SQL (5개 STG → 통합)
-├── 03_ml_and_cortex_v2.sql       # ML Forecast + Cortex SQL
-├── 04_databricks_integration.py  # Databricks pipeline (Delta + MLflow + Gold KPI)
-├── 05_databricks_sql_analytics.sql # Databricks SQL analytics queries
-├── 06_palantir_foundry_integration.py # Foundry pipeline (Ontology + Actions + Contour)
-├── databricks_notebook.py        # Databricks notebook (end-to-end)
-├── streamlit_app_v4.py           # Streamlit 앱 (최신, GPT Pro 리뷰 반영)
-├── streamlit_app_v3.py           # Streamlit 앱 (이전 버전)
-├── DEMO_SCRIPT.md                # 10분 데모 발표 스크립트
-├── CODEX_HANDOFF.md              # 프로젝트 문서
-└── MoveSignal_AI_Hackathon.pptx  # 발표 PPT (13슬라이드)
+│
+│ ── Snowflake SQL Pipeline ──
+├── 02_feature_mart_v4.sql          # Feature Mart (5 STG → FEATURE_MART_FINAL)
+├── 03_ml_and_cortex_v2.sql         # ML Forecast + Cortex LLM
+├── 06_semantic_view.sql            # Semantic View (Cortex Analyst)
+├── 07_dynamic_tables_tasks.sql     # Dynamic Tables + Tasks + V_APP_HEALTH
+├── 08_ajd_integration.sql          # AJD 통신 데이터 통합
+├── 09_cortex_search_agent.sql      # Cortex Search + Agent
+├── 10_external_data.sql            # 4개 외부 데이터 + FEATURE_MART_V2
+├── 11_ablation_study.sql           # Ablation A→E (5 모델 비교)
+│
+│ ── Streamlit App ──
+├── streamlit_app_v7.py             # 최종 앱 (5탭, 경쟁용)
+├── streamlit_app_v6.py             # 4탭 버전
+├── streamlit_app_v5.py             # AI_COMPLETE + structured output
+│
+│ ── Cross-Platform (Portfolio) ──
+├── 04_databricks_integration.py    # Databricks pipeline
+├── 05_databricks_sql_analytics.sql # Databricks SQL
+├── 06_palantir_foundry_integration.py # Palantir Foundry
+├── databricks_notebook.py          # Databricks notebook
+│
+│ ── Presentation ──
+├── DEMO_SCRIPT.md                  # 10분 데모 스크립트
+├── CODEX_HANDOFF.md                # 프로젝트 문서
+└── MoveSignal_AI_Hackathon.pptx    # 발표 PPT
 ```
 
 ## Snowflake Objects
 
 | Object | Type | Description |
 |--------|------|-------------|
-| `FEATURE_MART_FINAL` | Table | 통합 Feature Mart (3구 × 60개월) |
-| `MOVESIGNAL_FORECAST` | ML Model | Snowflake ML FORECAST 모델 |
-| `FORECAST_RESULTS` | Table | 3개월 예측 결과 |
-| `RECOMMEND_ALLOCATION` | Procedure | 예산 배분 추천 |
-| `SIMULATE_WHATIF` | Procedure | What-if 시뮬레이션 |
-| `MOVESIGNAL_APP` | Streamlit | 배포된 Streamlit 앱 |
+| `FEATURE_MART_V2` | Table | 확장 Feature Mart (50+ features) |
+| `DT_FEATURE_MART` | Dynamic Table | 자동 갱신 (1h lag) |
+| `DT_ALLOCATION_INPUT` | Dynamic Table | 배분 비율 자동 계산 |
+| `MOVESIGNAL_FORECAST_V2` | ML Model | Ablation 최종 모델 (외생변수 포함) |
+| `ABLATION_RESULTS` | Table | 5 모델 MAPE/SMAPE/MAE 비교 |
+| `MOVESIGNAL_SV` | Semantic View | Cortex Analyst용 비즈니스 메트릭 |
+| `MOVESIGNAL_SEARCH_SVC` | Cortex Search | 정책/룰북 문서 검색 |
+| `POLICY_DOCUMENTS` | Table | AI 근거용 정책 문서 |
+| `TASK_REFRESH_PIPELINE` | Task | 매일 06:00 KST 갱신 |
+| `TASK_RETRAIN_FORECAST` | Task | 매주 월 07:00 KST 재학습 |
+| `V_APP_HEALTH` | View | 운영 상태 모니터링 |
+| `V_ABLATION_SUMMARY` | View | Ablation MAPE 개선 요약 |
 
-## Palantir Foundry Objects
+## Execution Order (Snowflake)
 
-| Object | Type | Description |
-|--------|------|-------------|
-| `District` | Ontology Object | 서울시 행정구 (서초/영등포/중구) |
-| `MonthlyFeature` | Ontology Object | Feature Mart 월별 레코드 |
-| `DemandForecast` | Ontology Object | 3개월 수요 예측 결과 |
-| `BudgetAllocation` | Ontology Object | 예산 배분 의사결정 (Action-backed) |
-| `district_features` | Link Type | District → MonthlyFeature (ONE_TO_MANY) |
-| `district_forecasts` | Link Type | District → DemandForecast (ONE_TO_MANY) |
-| Contour Queries | Analytics | District ranking, YoY growth, allocation tracker |
+```sql
+-- 1. Base pipeline
+02_feature_mart_v4.sql
+03_ml_and_cortex_v2.sql
 
-## Databricks Objects (Unity Catalog)
+-- 2. External data + extended features
+10_external_data.sql
 
-| Object | Type | Description |
-|--------|------|-------------|
-| `feature_mart_final` | Delta Table | Snowflake Feature Mart mirror |
-| `forecast_results_databricks` | Delta Table | MLflow-tracked forecast results |
-| `gold_district_kpi` | Delta Table | Gold-layer district KPI rollups |
-| `audit_log` | Delta Table | Append-only pipeline audit trail |
-| `v_budget_allocation` | View | Parametric budget allocation |
-| `/movesignal-ai/demand-forecast` | MLflow Experiment | Forecast model tracking |
+-- 3. Ablation study
+11_ablation_study.sql
 
-## Palantir Foundry Quick Start
+-- 4. AI layer
+06_semantic_view.sql
+09_cortex_search_agent.sql
 
-```bash
-# Set environment variables
-export FOUNDRY_URL="https://your-stack.palantirfoundry.com"
-export FOUNDRY_TOKEN="..."
+-- 5. Operations
+07_dynamic_tables_tasks.sql
 
-# Run full Foundry pipeline (Ontology + Transforms + Actions + Contour)
-python 06_palantir_foundry_integration.py
+-- 6. (Optional) AJD deep integration
+08_ajd_integration.sql
 
-# Exports: foundry/ontology_schema.json, foundry/datasets/*.parquet, foundry/contour_queries.json
+-- 7. Deploy Streamlit
+streamlit_app_v7.py
 ```
 
-## Databricks Quick Start
+## Key Differentiators
 
-```bash
-# Set environment variables
-export DATABRICKS_HOST="https://your-workspace.cloud.databricks.com"
-export DATABRICKS_TOKEN="dapi..."
-export DATABRICKS_CATALOG="movesignal_ai"
-
-# Run full pipeline (Feature Mart → Delta → MLflow Forecast → Gold KPI)
-python 04_databricks_integration.py
-
-# Or import databricks_notebook.py into Databricks workspace
-```
+- **Ablation Study**: Sponsor-only → +Holiday → +Age → +Tourism → +Commercial, MAPE 개선 정량화
+- **Evidence Chain**: Forecast metrics → Feature importance → Search-grounded rules → Structured action
+- **Dual Use**: 민간 (렌탈/마케팅 배분) + 공공 (상권 활성화/행정 배분)
+- **Production-Ready**: Dynamic Tables (1h lag) + Tasks (daily/weekly) + Health monitoring
 
 ## Cost
 
-~**$80/month** Snowflake (Compute WH X-Small + Cortex LLM + Streamlit hosting)
-Databricks leg runs on serverless SQL warehouse; cost depends on usage.
+~**$80/month** (Compute WH X-Small + Cortex LLM + Streamlit + Dynamic Tables)
 
 ## Author
 
 **Doeon Kim** — [GitHub](https://github.com/KIM3310)
+
+---
+
+*Submission deadline: 2026-04-12 23:59 KST*
+*Finals: 2026-04-29, Seoul (10min presentation + 3min Q&A)*

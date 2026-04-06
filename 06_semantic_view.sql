@@ -32,7 +32,7 @@ CREATE OR REPLACE SEMANTIC VIEW MOVESIGNAL_SV
     -- -------------------------------------------------------
     FEATURE_MART AS (
       SELECT *
-      FROM MOVESIGNAL_AI.ANALYTICS.FEATURE_MART_FINAL
+      FROM MOVESIGNAL_AI.ANALYTICS.FEATURE_MART_V2
     )
       PRIMARY KEY (YM, DISTRICT)
       WITH SYNONYMS = ('피쳐마트', '피처마트', 'feature mart', '마트')
@@ -233,6 +233,78 @@ CREATE OR REPLACE SEMANTIC VIEW MOVESIGNAL_SV
         PRICE_CHG_PCT
           COMMENT 'Month-over-month real-estate price change percentage (가격 변화율 %)'
           WITH SYNONYMS = ('가격변화율', '가격증감률', '매매가변화율')
+          AS METRIC
+      )
+
+      -- External data: Holiday calendar
+      COLUMNS (
+        HOLIDAY_DAYS
+          COMMENT 'Number of public holidays in the month (월내 공휴일 일수)'
+          WITH SYNONYMS = ('공휴일', '공휴일수', '휴일')
+          AS METRIC,
+
+        LONG_WEEKEND_CNT
+          COMMENT 'Number of long weekends in the month (연휴 횟수)'
+          WITH SYNONYMS = ('연휴', '연휴수', '징검다리')
+          AS METRIC,
+
+        BUSINESS_DAYS
+          COMMENT 'Number of business days (영업일수)'
+          WITH SYNONYMS = ('영업일', '근무일', '평일수')
+          AS METRIC
+      )
+
+      -- External data: Demographics
+      COLUMNS (
+        AGE_20_39_SHARE
+          COMMENT 'Share of population aged 20-39 (20-39세 비중)'
+          WITH SYNONYMS = ('청년비중', '2030비중', '젊은층비중')
+          AS METRIC,
+
+        SENIOR_60P_SHARE
+          COMMENT 'Share of population aged 60+ (60세이상 비중)'
+          WITH SYNONYMS = ('시니어비중', '고령비중', '노인비중')
+          AS METRIC,
+
+        FAMILY_30_49_SHARE
+          COMMENT 'Share of population aged 30-49, family demographic (30-49세 가족세대 비중)'
+          WITH SYNONYMS = ('가족세대비중', '3040비중')
+          AS METRIC
+      )
+
+      -- External data: Tourism
+      COLUMNS (
+        TOURISM_DEMAND_IDX
+          COMMENT 'Tourism demand index, base 100 = 2021-01 (관광수요지수)'
+          WITH SYNONYMS = ('관광수요', '관광지수', '관광수요지수')
+          AS METRIC,
+
+        FOREIGN_VISITOR_IDX
+          COMMENT 'Foreign visitor index, base 100 = 2021-01 (외래객지수)'
+          WITH SYNONYMS = ('외래객', '외국인관광', '외래객지수')
+          AS METRIC
+      )
+
+      -- External data: Commercial health
+      COLUMNS (
+        STABILITY_SCORE
+          COMMENT 'Commercial zone stability score 0-1 (상권 안정도)'
+          WITH SYNONYMS = ('상권안정도', '상권건강도', '안정도')
+          AS METRIC,
+
+        NET_STORE_CHANGE
+          COMMENT 'Net store openings minus closures (순 점포 변동)'
+          WITH SYNONYMS = ('순점포변동', '개폐업차이', '점포변동')
+          AS METRIC,
+
+        RENTAL_SIGNAL_V2
+          COMMENT 'Derived rental signal combining migration, stores, tourism (렌탈 신호)'
+          WITH SYNONYMS = ('렌탈신호', '렌탈시그널', '임대신호')
+          AS METRIC,
+
+        MARKET_HEALTH_SCORE
+          COMMENT 'Market health = stability * (1 - closure_risk * 0.3) (시장건강도)'
+          WITH SYNONYMS = ('시장건강도', '마켓건강도')
           AS METRIC
       ),
 
