@@ -23,7 +23,7 @@ MoveSignal AI는 Snowflake Marketplace 데이터 위에 Semantic View와 Cortex 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Data Sources                              │
-│  Marketplace: SPH + Richgo + AJD (스폰서)                    │
+│  Marketplace: SPH + Richgo (스폰서)                           │
 │  External: 공휴일 + 연령구조 + 관광수요 + 상권변화 (공개)       │
 └────────────────────────┬────────────────────────────────────┘
                          ▼
@@ -64,7 +64,7 @@ MoveSignal AI는 Snowflake Marketplace 데이터 위에 Semantic View와 Cortex 
 |--------|------|-------|
 | **SPH** | 유동인구 (거주/직장/방문), 카드소비 (8 카테고리), 자산/소득 | 법정동 → 구 집계 |
 | **Richgo** | 아파트 매매/전세 시세, 인구이동 (전입/전출/순이동) | 시군구 |
-| **AJD** | 통신 가입/계약, 렌탈, 마케팅, CS | 시/군 |
+| **AJD** *(Optional)* | 통신 가입/계약, 렌탈, 마케팅, CS | 시/군 (별도 통합 필요) |
 
 ### External (Public Open Data)
 | Source | Data | License | URL |
@@ -85,7 +85,7 @@ movesignal-ai/
 ├── 03_ml_and_cortex_v2.sql         # ML Forecast + Cortex LLM
 ├── 06_semantic_view.sql            # Semantic View (Cortex Analyst)
 ├── 07_dynamic_tables_tasks.sql     # Dynamic Tables + Tasks + V_APP_HEALTH
-├── 08_ajd_integration.sql          # AJD 통신 데이터 통합
+├── 08_ajd_integration.sql          # AJD 통신 데이터 통합 (Optional, 별도 셋업 필요)
 ├── 09_cortex_search_agent.sql      # Cortex Search + Agent
 ├── 10_external_data.sql            # 4개 외부 데이터 + FEATURE_MART_V2
 ├── 11_ablation_study.sql           # Ablation A→E (5 모델 비교)
@@ -127,7 +127,7 @@ movesignal-ai/
 ## Prerequisites
 
 - Snowflake account with **ACCOUNTADMIN** role
-- Marketplace datasets: **SPH**, **Richgo**, **AJD** (sponsor data)
+- Marketplace datasets: **SPH**, **Richgo** (sponsor data)
 - Warehouse: `COMPUTE_WH` (X-Small)
 - Streamlit in Snowflake enabled
 - Database/Schema: `MOVESIGNAL_AI.ANALYTICS`

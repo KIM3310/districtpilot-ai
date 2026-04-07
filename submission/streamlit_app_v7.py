@@ -1008,8 +1008,8 @@ with tabs[4]:
         [
             {
                 "Layer": "Data",
-                "Snowflake Object": "Marketplace (SPH + Richgo + AJD + Holiday + Demographics + Tourism)",
-                "역할": "원천 데이터 (6종 외부 데이터 포함)",
+                "Snowflake Object": "Marketplace (SPH + Richgo) + 공공데이터 4종",
+                "역할": "원천 데이터 (스폰서 2종 + 외부 4종)",
             },
             {
                 "Layer": "Feature Store",
@@ -1081,12 +1081,6 @@ with tabs[4]:
             },
             {
                 "데이터 소스": "카드 소비 데이터 (Richgo)",
-                "라이선스": "Snowflake Marketplace",
-                "URL": "marketplace.snowflake.com",
-                "갱신 주기": "월 1회",
-            },
-            {
-                "데이터 소스": "부동산 데이터 (AJD)",
                 "라이선스": "Snowflake Marketplace",
                 "URL": "marketplace.snowflake.com",
                 "갱신 주기": "월 1회",
