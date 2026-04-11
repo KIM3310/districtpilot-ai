@@ -4,7 +4,7 @@ DistrictPilot AI v7 — Competition-Winning Snowflake-native Decision Agent
 
 Architecture:
   FEATURE_MART_V2 (holiday + demographics + tourism + commercial)
-  Snowflake ML FORECAST -> evaluation metrics + feature importance
+  Snowflake ML FORECAST (auto-resolved live model) -> evaluation metrics + feature importance
   ABLATION_RESULTS -> model improvement evidence
   AI_COMPLETE structured output -> action cards with fallback
   Dynamic Tables + Tasks -> operational freshness
@@ -13,6 +13,8 @@ Architecture:
 Tabs: Allocation | Analysis | AI Agent | Simulation | Ops/Trust
 """
 import json
+from typing import List, Tuple
+
 import pandas as pd
 import streamlit as st
 from snowflake.snowpark.context import get_active_session
@@ -20,12 +22,18 @@ from snowflake.snowpark.context import get_active_session
 # ---------------------------------------------------------------------------
 # Config constants
 # ---------------------------------------------------------------------------
-# V2 includes external data; falls back to FINAL if V2 doesn't exist yet
-FEATURE_MART_FQN = "DISTRICTPILOT_AI.ANALYTICS.FEATURE_MART_V2"
-FEATURE_MART_FALLBACK = "DISTRICTPILOT_AI.ANALYTICS.FEATURE_MART_FINAL"
+# Prefer the latest live objects, but tolerate legacy names so the app remains
+# stable across demo environments and handoff states.
+FEATURE_MART_CANDIDATES = [
+    "DISTRICTPILOT_AI.ANALYTICS.FEATURE_MART_V2",
+    "DISTRICTPILOT_AI.ANALYTICS.FEATURE_MART_FINAL",
+]
 FORECAST_RESULTS_FQN = "DISTRICTPILOT_AI.ANALYTICS.FORECAST_RESULTS"
 AVF_FQN = "DISTRICTPILOT_AI.ANALYTICS.ACTUAL_VS_FORECAST"
-FORECAST_MODEL_FQN = "DISTRICTPILOT_AI.ANALYTICS.DISTRICTPILOT_FORECAST"
+FORECAST_MODEL_CANDIDATES = [
+    "DISTRICTPILOT_AI.ANALYTICS.DISTRICTPILOT_FORECAST_V2",
+    "DISTRICTPILOT_AI.ANALYTICS.DISTRICTPILOT_FORECAST",
+]
 SEMANTIC_VIEW_FQN = "DISTRICTPILOT_AI.ANALYTICS.DISTRICTPILOT_SV"
 HEALTH_VIEW_FQN = "DISTRICTPILOT_AI.ANALYTICS.V_APP_HEALTH"
 ABLATION_FQN = "DISTRICTPILOT_AI.ANALYTICS.ABLATION_RESULTS"
@@ -51,6 +59,14 @@ st.markdown(
 
 st.markdown("#### DistrictPilot AI — 서초/영등포/중구 수요·배분 의사결정 에이전트 &nbsp;|&nbsp; v7")
 
+try:
+    session.sql(
+        "ALTER SESSION SET QUERY_TAG = "
+        "'{\"app\":\"districtpilot_ai\",\"version\":\"v7\",\"entrypoint\":\"app_init\"}'"
+    ).collect()
+except Exception:
+    pass
+
 # ---------------------------------------------------------------------------
 # Utility / helper functions
 # ---------------------------------------------------------------------------
@@ -61,12 +77,37 @@ def load_df(_session, sql: str) -> pd.DataFrame:
     return _session.sql(sql).to_pandas()
 
 
+def attempt_read(sql: str) -> Tuple[pd.DataFrame, bool]:
+    """Execute SQL and return both the frame and whether execution succeeded."""
+    try:
+        return load_df(session, sql), True
+    except Exception:  # noqa: BLE001 – intentional catch-all for resilient UI
+        return pd.DataFrame(), False
+
+
 def safe_read(sql: str) -> pd.DataFrame:
     """Execute SQL with graceful error handling. Returns empty DataFrame on failure."""
-    try:
-        return load_df(session, sql)
-    except Exception:  # noqa: BLE001 – intentional catch-all for resilient UI
-        return pd.DataFrame()
+    df, _ = attempt_read(sql)
+    return df
+
+
+def resolve_first_usable(candidates: List[str], sql_builder) -> Tuple[pd.DataFrame, str]:
+    """
+    Return the first candidate that executes successfully, preferring one that
+    also returns rows.
+    """
+    first_success_df = None
+    first_success_name = candidates[0]
+    for name in candidates:
+        df, ok = attempt_read(sql_builder(name))
+        if ok and first_success_df is None:
+            first_success_df = df
+            first_success_name = name
+        if ok and not df.empty:
+            return df, name
+    if first_success_df is not None:
+        return first_success_df, first_success_name
+    return pd.DataFrame(), candidates[0]
 
 
 def clean_variant(value) -> str:
@@ -105,14 +146,10 @@ def safe_float(value, default=0.0) -> float:
 # Data loading
 # ---------------------------------------------------------------------------
 
-# Try FEATURE_MART_V2 first; if it doesn't exist, fall back to FEATURE_MART_FINAL
-feature_mart = safe_read(f"""
-    SELECT * FROM {FEATURE_MART_FQN} ORDER BY YM, DISTRICT
-""")
-if feature_mart.empty:
-    feature_mart = safe_read(f"""
-        SELECT * FROM {FEATURE_MART_FALLBACK} ORDER BY YM, DISTRICT
-    """)
+feature_mart, active_feature_mart_fqn = resolve_first_usable(
+    FEATURE_MART_CANDIDATES,
+    lambda fqn: f"SELECT * FROM {fqn} ORDER BY YM, DISTRICT",
+)
 
 forecast_raw = safe_read(f"""
     SELECT SERIES AS DISTRICT, TS, FORECAST, LOWER_BOUND, UPPER_BOUND
@@ -126,17 +163,22 @@ avf_raw = safe_read(f"""
     ORDER BY DS, DISTRICT
 """)
 
-eval_raw = safe_read(f"""
-    SELECT * FROM TABLE({FORECAST_MODEL_FQN}!SHOW_EVALUATION_METRICS())
-""")
+eval_raw, active_forecast_model_fqn = resolve_first_usable(
+    FORECAST_MODEL_CANDIDATES,
+    lambda fqn: f"SELECT * FROM TABLE({fqn}!SHOW_EVALUATION_METRICS())",
+)
+eval_from_model = not eval_raw.empty
 if eval_raw.empty:
     eval_raw = safe_read(f"SELECT * FROM {EVAL_METRICS_FQN}")
 
-fi_raw = safe_read(f"""
-    SELECT * FROM TABLE({FORECAST_MODEL_FQN}!EXPLAIN_FEATURE_IMPORTANCE())
-""")
+fi_raw, fi_model_fqn = resolve_first_usable(
+    FORECAST_MODEL_CANDIDATES,
+    lambda fqn: f"SELECT * FROM TABLE({fqn}!EXPLAIN_FEATURE_IMPORTANCE())",
+)
 if fi_raw.empty:
     fi_raw = safe_read(f"SELECT * FROM {FEATURE_IMPORTANCE_FQN}")
+elif not eval_from_model:
+    active_forecast_model_fqn = fi_model_fqn
 
 health_raw = safe_read(f"SELECT * FROM {HEALTH_VIEW_FQN}")
 
@@ -145,6 +187,14 @@ ablation_raw = safe_read(f"SELECT * FROM {ABLATION_FQN}")
 if feature_mart.empty and forecast_raw.empty:
     st.error("데이터 로딩 실패. 테이블명/권한을 확인하세요.")
     st.stop()
+
+active_feature_mart_name = active_feature_mart_fqn.rsplit(".", maxsplit=1)[-1]
+active_forecast_model_name = active_forecast_model_fqn.rsplit(".", maxsplit=1)[-1]
+st.caption(
+    f"Live objects: Feature Mart `{active_feature_mart_name}` | "
+    f"Forecast `{active_forecast_model_name}` | "
+    f"Semantic View `DISTRICTPILOT_SV`"
+)
 
 # ---------------------------------------------------------------------------
 # Derived dataframes
@@ -617,7 +667,7 @@ with tabs[1]:
             kpi_row2 = st.columns(4)
             kpi_row2[0].metric(
                 "연령구조 (20~39)",
-                f'{safe_float(snap.get("AGE_20_39_SHARE", 0)):.1f}%',
+                f'{safe_float(snap.get("AGE_20_39_SHARE", 0)):.1f}%'
             )
             kpi_row2[1].metric(
                 "관광수요",
@@ -1065,6 +1115,11 @@ with tabs[4]:
     # --- Owner's Rights & Execution Context ---
     st.divider()
     st.subheader("실행 환경 증거")
+    live_obj_cols = st.columns(3)
+    live_obj_cols[0].metric("Feature Mart", active_feature_mart_name)
+    live_obj_cols[1].metric("Forecast Model", active_forecast_model_name)
+    live_obj_cols[2].metric("Semantic View", "DISTRICTPILOT_SV")
+
     exec_ctx = safe_read(
         "SELECT CURRENT_ROLE() AS ROLE, "
         "CURRENT_WAREHOUSE() AS WAREHOUSE, "
@@ -1118,12 +1173,12 @@ with tabs[4]:
             },
             {
                 "Layer": "Feature Store",
-                "Snowflake Object": "DT_FEATURE_MART_V2 (Dynamic Table)",
+                "Snowflake Object": f"DT_FEATURE_MART -> {active_feature_mart_name}",
                 "역할": "자동 갱신 Feature Mart (확장 컬럼 포함)",
             },
             {
                 "Layer": "ML",
-                "Snowflake Object": "DISTRICTPILOT_FORECAST (ML FORECAST)",
+                "Snowflake Object": f"{active_forecast_model_name} (ML FORECAST)",
                 "역할": "3개월 수요 예측 + Ablation 검증",
             },
             {
@@ -1157,7 +1212,7 @@ with tabs[4]:
         """
 - **Streamlit 실행**: Owner's rights (소유자 권한 + 소유자 Warehouse)
 - **Cortex Analyst**: Semantic View 접근 권한 기반 (ACCOUNTADMIN, 커스텀 롤 확장 가능)
-- **Query Tag**: `{"app":"districtpilot_ai","version":"v7"}`
+- **Query Tag**: `{\"app\":\"districtpilot_ai\",\"version\":\"v7\"}`
 - **데이터 격리**: Marketplace 데이터 -> 내부 STG 테이블 복제 (원본 비노출)
 """
     )

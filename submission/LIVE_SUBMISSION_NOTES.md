@@ -15,19 +15,22 @@ This document is the authoritative submission note for the live Snowflake build.
 
 1. Run [`12_final_precheck.sql`](12_final_precheck.sql)
 2. Open the deployed Streamlit app and test all five tabs
-3. If the deployed app still expects legacy object names, run [`13_live_app_compatibility_patch.sql`](13_live_app_compatibility_patch.sql)
-4. Re-test `Allocation`, `Analysis`, and `Ops / Trust`
-5. Record the final demo or submit the final package
+3. Run [`14_judge_fastpath.sql`](14_judge_fastpath.sql) and keep the results ready for demo-day verification
+4. If the deployed app still expects legacy object names, run [`13_live_app_compatibility_patch.sql`](13_live_app_compatibility_patch.sql) as a last resort
+5. Re-test `Allocation`, `Analysis`, and `Ops / Trust`
+6. Record the final demo or submit the final package
 
 ## Compatibility Rule
 
-The live app may still reference legacy names such as:
+The current app prefers canonical live objects first and only falls back when needed.
+
+Legacy names that may still appear in older deployments:
 
 - `DISTRICTPILOT_FORECAST`
 - `ABLATION_RESULTS.MODEL`
 - `ABLATION_RESULTS.DISTRICT`
 
-If that happens, use [`13_live_app_compatibility_patch.sql`](13_live_app_compatibility_patch.sql) to restore compatibility without redeploying the app.
+If an older deployed build still breaks on those names, use [`13_live_app_compatibility_patch.sql`](13_live_app_compatibility_patch.sql) to restore compatibility without redeploying the app.
 
 ## Judge Message
 

@@ -23,6 +23,12 @@ DistrictPilot AI는 **100% Snowflake Native** 의사결정 에이전트입니다
 
 외부 서비스 없이 Snowflake 안에서 데이터 수집부터 의사결정까지 완결됩니다.
 
+## Judge Fast Path
+
+1. Snowsight에서 [`14_judge_fastpath.sql`](14_judge_fastpath.sql)을 실행해 라이브 스택과 증거 체인을 확인합니다.
+2. Streamlit 앱에서 `Allocation -> Analysis -> AI Agent -> Ops / Trust` 순서로 클릭합니다.
+3. 레포에서는 [`JUDGE_FASTPATH.md`](JUDGE_FASTPATH.md), [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md), [`FINAL_PRE_SUBMISSION_RUNBOOK.md`](FINAL_PRE_SUBMISSION_RUNBOOK.md) 순서로 보면 됩니다.
+
 ## Architecture
 
 ```
@@ -60,6 +66,13 @@ Current live alignment:
 | Search Grounding | `CORTEX.SEARCH()` | 외부 컨텍스트로 hallucination 방지 |
 | AI Structured Output | `AI_COMPLETE()` + `SNOWFLAKE.CORTEX.COMPLETE()` | JSON action card (priority/budget_pct/confidence) |
 | Refresh State | `V_APP_HEALTH` | 실시간 LAG_SEC, task 상태, query_tag 감사 |
+
+## Engineering Signals
+
+- **Version-tolerant app**: Streamlit 앱이 `DISTRICTPILOT_FORECAST_V2`와 레거시 모델명을 자동으로 흡수해 라이브 데모 리스크를 낮춥니다.
+- **Grounded AI**: Feature Mart JSON 컨텍스트, structured output, Cortex Search grounding으로 설명 가능한 추천을 만듭니다.
+- **Observable ops**: `V_APP_HEALTH`, query tag, 실행 컨텍스트, Dynamic Table/Task 상태를 앱과 SQL에서 확인할 수 있습니다.
+- **Submission discipline**: precheck SQL, judge fast-path SQL, runbook, compatibility notes를 함께 제공해 운영 감각을 드러냅니다.
 
 ## Scoring Coverage
 
@@ -117,7 +130,9 @@ districtpilot-ai/
 |-- FINAL_PRE_SUBMISSION_RUNBOOK.md # 제출 직전 15분 런북
 |-- LIVE_SUBMISSION_NOTES.md        # 라이브 오브젝트 정합성 기준
 |-- 12_final_precheck.sql           # Snowsight 최종 점검 SQL
+|-- 14_judge_fastpath.sql           # 심사자용 빠른 검증 SQL
 |-- 13_live_app_compatibility_patch.sql # 라이브 앱 호환 패치
+|-- JUDGE_FASTPATH.md               # 심사자용 3분 가이드
 |-- generate_pptx.py                # 최종 PPT 생성 스크립트
 |-- build_demo_video.py             # 한국어 TTS 데모 영상 생성 스크립트
 ```

@@ -66,9 +66,14 @@
 
 ### GitHub 정리
 - [ ] README: 문제 정의 / 아키텍처 / 데이터 소스 / 실행 순서 / 라이선스
+- [ ] JUDGE_FASTPATH.md: 심사자 빠른 진입 문서 포함
 - [ ] .gitignore: 스폰서 데이터 경로 제외
 - [ ] 데모 영상 링크 README에 추가
 - [ ] 스폰서 원본 CSV/파케이 파일 미포함 확인
+
+### 심사 직전 빠른 검증
+- [ ] 14_judge_fastpath.sql 실행 결과 탭 열어두기
+- [ ] 앱 상단 live object 배너에서 Feature Mart / Forecast model 이름 확인
 
 ### 결선 대비 (4/29 서울)
 - [ ] 10분 발표 리허설 2회 이상
