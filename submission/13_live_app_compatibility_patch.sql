@@ -1,0 +1,38 @@
+USE ROLE ACCOUNTADMIN;
+USE WAREHOUSE COMPUTE_WH;
+USE DATABASE DISTRICTPILOT_AI;
+USE SCHEMA ANALYTICS;
+
+ALTER SESSION SET QUERY_TAG = '{"app":"districtpilot_ai","module":"live_app_compat","version":"v1"}';
+
+-- 1. Keep the legacy model name aligned with the final production input so
+--    the currently deployed Streamlit app can read evaluation metrics and
+--    feature importance without code changes.
+CREATE OR REPLACE SNOWFLAKE.ML.FORECAST DISTRICTPILOT_FORECAST(
+    INPUT_DATA        => SYSTEM$REFERENCE('TABLE', 'FORECAST_INPUT_E'),
+    TIMESTAMP_COLNAME => 'DS',
+    TARGET_COLNAME    => 'Y',
+    SERIES_COLNAME    => 'DISTRICT'
+);
+
+-- 2. Rebuild a compatibility layer for ABLATION_RESULTS that preserves the
+--    original columns used by SQL and adds alias columns expected by the app.
+ALTER TABLE IF EXISTS ABLATION_RESULTS RENAME TO ABLATION_RESULTS_BASE;
+
+CREATE OR REPLACE VIEW ABLATION_RESULTS AS
+SELECT
+    MODEL_NAME,
+    MODEL_NAME AS MODEL,
+    FEATURE_SET,
+    SERIES,
+    SERIES AS DISTRICT,
+    MAPE,
+    SMAPE,
+    MAE
+FROM ABLATION_RESULTS_BASE;
+
+-- 3. Smoke-test the exact objects used by the app.
+SELECT * FROM TABLE(DISTRICTPILOT_FORECAST!SHOW_EVALUATION_METRICS());
+SELECT * FROM TABLE(DISTRICTPILOT_FORECAST!EXPLAIN_FEATURE_IMPORTANCE());
+SELECT * FROM ABLATION_RESULTS LIMIT 10;
+SELECT * FROM V_APP_HEALTH;
