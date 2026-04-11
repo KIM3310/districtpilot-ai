@@ -6,28 +6,22 @@
 [![Status](https://img.shields.io/badge/Status-Competition_Ready-brightgreen)]()
 
 > **Snowflake Korea Hackathon 2026 - Tech Track**
-> 서울 서초/영등포/중구 전입·이사 기반 홈서비스 수요 오케스트레이션 에이전트
+> 서울 서초/영등포/중구 렌탈 마케팅 예산 배분 의사결정 에이전트
 
 ## Problem
 
-"다음 달 서초/영등포/중구 중 어디의 전입·이사 수요를 먼저 잡아야 하고, 어떤 홈서비스/렌탈 액션을 집행해야 하는가?"
+"다음 달 서초/영등포/중구 중 어디에 어떤 렌탈 상품과 마케팅 예산을 얼마나 넣어야 하는가?"
 
 ## Solution
 
-DistrictPilot AI는 **100% Snowflake Native** 전입·이사 수요 오케스트레이션 에이전트입니다.
+DistrictPilot AI는 **100% Snowflake Native** 의사결정 에이전트입니다.
 
-- **Semantic View + Cortex Analyst** -- 전입·이사/소비/관광 신호를 자연어에서 정확한 SQL로 변환
-- **ML FORECAST + Ablation** -- 외생변수 효과를 정량 증명한 지역 수요 예측
-- **AI_COMPLETE Structured Output** -- 추천 지역, 집행 강도, 리스크, 다음 액션을 JSON으로 반환
-- **Dynamic Tables + Tasks** -- 운영 가능한 월간 집행 시스템을 증명 (1h lag, daily/weekly refresh)
+- **Semantic View + Cortex Analyst** -- 자연어 질문을 정확한 SQL로 변환 (VQR 10개, SQL 규칙 13개)
+- **ML FORECAST + Ablation** -- 외생변수 효과를 정량 증명한 수요 예측
+- **AI_COMPLETE Structured Output** -- JSON 액션 카드로 배분 의사결정 자동화
+- **Dynamic Tables + Tasks** -- 운영 가능성 증명 (1h lag, daily/weekly refresh)
 
-외부 서비스 없이 Snowflake 안에서 데이터 수집부터 전입 신호 해석, 집행 추천, 운영 모니터링까지 완결됩니다.
-
-## Judge Fast Path
-
-1. Snowsight에서 [`14_judge_fastpath.sql`](14_judge_fastpath.sql)을 실행해 라이브 스택과 증거 체인을 확인합니다.
-2. Streamlit 앱에서 `Capture Plan -> Move-in Signals -> AI Playbook -> Ops / Trust` 순서로 클릭합니다.
-3. 레포에서는 [`DOMAIN_POSITIONING.md`](DOMAIN_POSITIONING.md), [`JUDGE_FASTPATH.md`](JUDGE_FASTPATH.md), [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) 순서로 보면 됩니다.
+외부 서비스 없이 Snowflake 안에서 데이터 수집부터 의사결정까지 완결됩니다.
 
 ## Architecture
 
@@ -47,7 +41,7 @@ DT_FEATURE_MART (Dynamic Table, 1h lag) -> FEATURE_MART_V2
          |                    |
          v                    v
   Streamlit in Snowflake (5 tabs)
-  Capture Plan | Move-in Signals | AI Playbook | Scenario Lab | Ops/Trust
+  Allocation | Analysis | AI Agent | Simulation | Ops/Trust
 ```
 
 Current live alignment:
@@ -60,29 +54,22 @@ Current live alignment:
 
 | Step | Snowflake Object | Evidence |
 |------|------------------|----------|
-| Forecast | `DISTRICTPILOT_FORECAST_V2` | 3구 수요 예측 + evaluation metrics + feature importance |
-| Feature Importance | `FEATURE_IMPORTANCE` + `ABLATION_RESULTS` | 전입·이사/소비 신호별 Top-5 기여도, ablation 전후 MAPE 개선 |
+| Forecast | `DISTRICTPILOT_FORECAST_V2` | 3구 예측 + evaluation metrics + feature importance |
+| Feature Importance | `FEATURE_IMPORTANCE` + `ABLATION_RESULTS` | Top-5 기여도, ablation 전후 MAPE 개선 |
 | Semantic View | `DISTRICTPILOT_SV` | VQR 10개, SQL 규칙 13개, synonym 100+, 카테고리 7개 |
-| Search Grounding | `CORTEX.SEARCH()` | 설치/온보딩/집행 룰북 컨텍스트로 hallucination 방지 |
-| AI Structured Output | `AI_COMPLETE()` + `SNOWFLAKE.CORTEX.COMPLETE()` | JSON action card (recommended_district / allocation_pct / risk / next_action) |
+| Search Grounding | `CORTEX.SEARCH()` | 외부 컨텍스트로 hallucination 방지 |
+| AI Structured Output | `AI_COMPLETE()` + `SNOWFLAKE.CORTEX.COMPLETE()` | JSON action card (priority/budget_pct/confidence) |
 | Refresh State | `V_APP_HEALTH` | 실시간 LAG_SEC, task 상태, query_tag 감사 |
-
-## Engineering Signals
-
-- **Version-tolerant app**: Streamlit 앱이 `DISTRICTPILOT_FORECAST_V2`와 레거시 모델명을 자동으로 흡수해 라이브 데모 리스크를 낮춥니다.
-- **Grounded move-in engine**: Feature Mart JSON 컨텍스트와 Search grounding으로 전입·이사 시그널을 설명 가능한 추천으로 바꿉니다.
-- **Partner-data intersection**: SPH, Richgo, optional AJD가 가장 자연스럽게 만나는 도메인 축으로 문제를 정의했습니다.
-- **Observable ops**: `V_APP_HEALTH`, query tag, 실행 컨텍스트, Dynamic Table/Task 상태를 앱과 SQL에서 확인할 수 있습니다.
 
 ## Scoring Coverage
 
 | Criteria | Max | How We Cover It |
 |----------|-----|-----------------|
-| Creativity 25 | Move-in signal detection + capture orchestration + scenario lab | Forecast to action loop |
+| Creativity 25 | Forecast + Allocation + Simulation + Dual use case | Ablation, What-if, public+private |
 | Snowflake expertise 25 | Semantic View, Analyst, Search, DT, Tasks, AI_COMPLETE | Full native stack |
 | AI expertise 25 | Exogenous Forecast + Eval metrics + Feature importance + Grounded AI | Evidence-based agent |
-| Realism 15 | Installation rules, ops signals, V_APP_HEALTH, query tags | Operator-grade panel |
-| Presentation 10 | 문제-근거-액션 흐름이 한 줄로 닫힘 | Demo script + PPT + fast-path |
+| Realism 15 | V_APP_HEALTH, target lag, retry, RBAC, query tags | Ops/Trust panel |
+| Presentation 10 | 10-min demo, ROI, execution roadmap | Demo script + PPT |
 
 ## Data Sources
 
@@ -127,13 +114,10 @@ districtpilot-ai/
 |-- evidence_chain_slide.md         # Evidence Chain 슬라이드 + 30초 멘트
 |-- DATA_SOURCES_AND_LICENSES.md    # 데이터 소스 + 라이선스
 |-- SUBMISSION_CHECKLIST.md         # 제출 체크리스트
-|-- DOMAIN_POSITIONING.md           # 도메인 정의와 심사 메시지
 |-- FINAL_PRE_SUBMISSION_RUNBOOK.md # 제출 직전 15분 런북
 |-- LIVE_SUBMISSION_NOTES.md        # 라이브 오브젝트 정합성 기준
 |-- 12_final_precheck.sql           # Snowsight 최종 점검 SQL
-|-- 14_judge_fastpath.sql           # 심사자용 빠른 검증 SQL
 |-- 13_live_app_compatibility_patch.sql # 라이브 앱 호환 패치
-|-- JUDGE_FASTPATH.md               # 심사자용 3분 가이드
 |-- generate_pptx.py                # 최종 PPT 생성 스크립트
 |-- build_demo_video.py             # 한국어 TTS 데모 영상 생성 스크립트
 ```
@@ -209,7 +193,7 @@ python3 build_demo_video.py
 
 - **Ablation Study**: Sponsor-only -> +Holiday -> +Age -> +Tourism -> +Commercial, MAPE 개선 정량화
 - **Evidence Chain**: Forecast -> Feature Importance -> Semantic View -> Search Grounding -> Structured Output -> Refresh State
-- **Domain Fit**: SPH + Richgo + optional AJD가 가장 자연스럽게 만나는 전입·이사 기반 홈서비스 수요 문제
+- **Dual Use Case**: 동일 데이터/모델로 민간 (렌탈/마케팅 배분)과 공공 (상권 활성화/행정 배분) 모두 적용
 - **Production-Ready**: Dynamic Tables (1h lag) + Tasks (daily/weekly) + Health monitoring + Query tags
 
 ## Cost
