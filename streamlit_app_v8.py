@@ -542,43 +542,33 @@ CONTEXT:
 
 사용자 질문: {question}""".strip()
 
+    structured_prompt = prompt + """
+
+반드시 아래 JSON 형식으로만 답변하라. 다른 텍스트 없이 JSON만 출력하라:
+{"answer": "한국어 분석 답변", "recommended_district": "구 이름", "allocation_pct": 숫자, "drivers": ["요인1","요인2"], "risk": "리스크 설명", "next_action": "다음 액션"}"""
+
     try:
         rows = session.sql(
-            """
-            SELECT AI_COMPLETE(
-                model => ?,
-                prompt => ?,
-                model_parameters => {'temperature': 0, 'max_tokens': 600, 'guardrails': TRUE},
-                response_format => TYPE OBJECT(
-                    answer STRING,
-                    recommended_district STRING,
-                    allocation_pct FLOAT,
-                    drivers ARRAY(STRING),
-                    risk STRING,
-                    next_action STRING
-                ),
-                show_details => TRUE
-            ) AS RESPONSE
-            """,
-            params=[LLM_MODEL, prompt],
+            "SELECT SNOWFLAKE.CORTEX.COMPLETE(?, ?) AS R",
+            params=[LLM_MODEL, structured_prompt],
         ).collect()
         if not rows:
             return _fallback_complete(prompt)
-        raw = rows[0]["RESPONSE"]
+        raw = rows[0]["R"]
         if isinstance(raw, str):
-            try:
-                parsed = json.loads(raw)
-                if isinstance(parsed, dict):
-                    return parsed
-                elif isinstance(parsed, list) and parsed:
-                    return parsed[0] if isinstance(parsed[0], dict) else {"structured_output": {"answer": str(parsed[0])}}
-                return {"structured_output": {"answer": str(parsed)}}
-            except Exception:
-                return {"structured_output": {"answer": raw}}
-        elif isinstance(raw, dict):
-            return raw
-        else:
-            return {"structured_output": {"answer": str(raw)}}
+            # Try to extract JSON from the response
+            raw = raw.strip()
+            # Find JSON block in response
+            json_start = raw.find('{')
+            json_end = raw.rfind('}')
+            if json_start >= 0 and json_end > json_start:
+                try:
+                    parsed = json.loads(raw[json_start:json_end+1])
+                    return {"structured_output": parsed}
+                except Exception:
+                    pass
+            return {"structured_output": {"answer": raw}}
+        return {"structured_output": {"answer": str(raw)}}
     except Exception as e:
         return _fallback_complete(prompt)
 
