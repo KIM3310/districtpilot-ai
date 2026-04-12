@@ -3,7 +3,7 @@
 [![Snowflake](https://img.shields.io/badge/Snowflake-Native_App-29B5E8?logo=snowflake&logoColor=white)](https://www.snowflake.com/)
 [![Python](https://img.shields.io/badge/Python-3.8+-3776AB?logo=python&logoColor=white)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-in_Snowflake-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Status](https://img.shields.io/badge/Status-Competition_Ready-brightgreen)]()
+[![Status](https://img.shields.io/badge/Status-Submission_Ready-brightgreen)]()
 
 > **Snowflake Korea Hackathon 2026 - Tech Track**
 > 이사 직후 72시간 골든타임 — 홈서비스 수요를 예측하고 구별 집행 액션을 추천하는 Snowflake-native AI 에이전트
@@ -84,7 +84,7 @@ Current live alignment:
 | **기술 구현** | **25%** | Marketplace 3사 + ML FORECAST(외생변수) + Ablation 5모델 + AI_COMPLETE + DT + Tasks + Streamlit = 8개 Snowflake 기능 통합 |
 | **솔루션 완성도** | **20%** | 데이터 수집 → 예측 → 액션 추천 → 시뮬레이션 → 운영 모니터링 End-to-End 완결 |
 | **데이터 분석 & 인사이트** | **20%** | Feature Importance(외생변수 기여도) + Ablation(5모델 MAPE 비교) + 구별 인사이트 콜아웃 |
-| **발표 품질** | **10%** | 5탭 라이브 데모 + Judge Fast Path + QQ&A 7문항A 9문항 대비 |
+| **발표 품질** | **10%** | 5탭 라이브 데모 + Judge Fast Path + Q&A 9문항 대비 |
 
 **보너스 포인트**: Snowpark, Cortex AI (Complete + Search), Marketplace (SPH + Richgo + AJD), Streamlit 모두 활용
 
