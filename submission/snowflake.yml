@@ -3,5 +3,5 @@ streamlit:
   name: DISTRICTPILOT_APP
   stage: STREAMLIT_STAGE
   query_warehouse: COMPUTE_WH
-  main_file: streamlit_app_v7.py
-  title: "DistrictPilot AI v7"
+  main_file: streamlit_app_v8.py
+  title: "DistrictPilot AI v8"

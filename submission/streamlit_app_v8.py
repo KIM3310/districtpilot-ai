@@ -34,6 +34,7 @@ from snowflake.snowpark.context import get_active_session
 # Prefer the latest live objects, but tolerate legacy names so the app remains
 # stable across demo environments and handoff states.
 FEATURE_MART_CANDIDATES = [
+    "DISTRICTPILOT_AI.ANALYTICS.FEATURE_MART_V3",
     "DISTRICTPILOT_AI.ANALYTICS.FEATURE_MART_V2",
     "DISTRICTPILOT_AI.ANALYTICS.FEATURE_MART_FINAL",
 ]
@@ -57,19 +58,80 @@ session = get_active_session()
 
 st.set_page_config(page_title="DistrictPilot AI", layout="wide")
 
-# Compact header for SiS — title is already shown in Snowflake toolbar
-st.markdown(
-    "<style>"
-    ".block-container{padding-top:1rem !important;padding-bottom:1rem !important;}"
-    "header[data-testid='stHeader']{display:none;}"
-    "h1{margin-top:0 !important;margin-bottom:0 !important;font-size:1.6rem !important;}"
-    "</style>",
-    unsafe_allow_html=True,
-)
+# ── Premium UI Theme ──
+st.markdown("""<style>
+/* ── Global ── */
+.block-container{padding-top:.8rem !important;padding-bottom:1rem !important;max-width:1200px !important;}
+header[data-testid='stHeader']{display:none;}
 
-st.markdown(
-    "#### DistrictPilot AI — 서초/영등포/중구 전입·이사 수요 오케스트레이션 &nbsp;|&nbsp; v8"
-)
+/* ── Typography ── */
+h1{margin:0 !important;font-size:1.5rem !important;font-weight:700 !important;letter-spacing:-.02em;}
+h2{font-size:1.25rem !important;font-weight:600 !important;color:#1E2761 !important;border-bottom:2px solid #29B5E8;padding-bottom:.3rem;margin-top:1.2rem !important;}
+h3{font-size:1.05rem !important;font-weight:600 !important;color:#333 !important;}
+
+/* ── Metric cards ── */
+[data-testid="stMetric"]{
+    background:linear-gradient(135deg,#f8f9ff 0%,#eef4ff 100%);
+    border:1px solid #e0e8f5;border-radius:12px;padding:12px 16px !important;
+    box-shadow:0 1px 3px rgba(0,0,0,.06);
+}
+[data-testid="stMetric"] label{font-size:.75rem !important;color:#666 !important;font-weight:500 !important;text-transform:uppercase;letter-spacing:.04em;}
+[data-testid="stMetric"] [data-testid="stMetricValue"]{font-size:1.6rem !important;font-weight:700 !important;color:#1E2761 !important;}
+[data-testid="stMetric"] [data-testid="stMetricDelta"]{font-size:.8rem !important;}
+
+/* ── Tabs ── */
+.stTabs [data-baseweb="tab-list"]{gap:0;border-bottom:2px solid #e8e8e8;}
+.stTabs [data-baseweb="tab"]{
+    font-size:.9rem !important;font-weight:500;padding:10px 20px;
+    border-radius:8px 8px 0 0;color:#666;
+}
+.stTabs [aria-selected="true"]{
+    background:#29B5E8 !important;color:white !important;font-weight:700 !important;
+    border-bottom:2px solid #29B5E8;
+}
+
+/* ── Charts ── */
+[data-testid="stArrowVegaLiteChart"]{border-radius:8px;overflow:hidden;}
+
+/* ── Info/Warning/Success boxes ── */
+.stAlert{border-radius:10px !important;border-left:4px solid !important;}
+
+/* ── DataFrames ── */
+[data-testid="stDataFrame"]{border-radius:8px;overflow:hidden;border:1px solid #e8e8e8;}
+
+/* ── Buttons ── */
+.stButton>button{
+    border-radius:8px;font-weight:600;border:none;
+    background:linear-gradient(135deg,#29B5E8,#1E7BB8);color:white;
+    padding:8px 20px;transition:all .2s;
+}
+.stButton>button:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(41,181,232,.3);}
+
+/* ── Progress bars ── */
+.stProgress>div>div{background:linear-gradient(90deg,#29B5E8,#1E2761) !important;border-radius:8px;}
+
+/* ── Dividers ── */
+hr{border:none !important;height:1px !important;background:linear-gradient(90deg,transparent,#29B5E8,transparent) !important;margin:1.5rem 0 !important;}
+
+/* ── Expanders ── */
+.streamlit-expanderHeader{font-weight:600 !important;color:#1E2761 !important;font-size:.9rem !important;}
+
+/* ── Sidebar caption ── */
+.stCaption{color:#888 !important;font-size:.8rem !important;}
+</style>""", unsafe_allow_html=True)
+
+st.markdown("""
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+    <div style="background:linear-gradient(135deg,#29B5E8,#1E2761);color:white;font-weight:800;
+                font-size:1.1rem;padding:6px 14px;border-radius:8px;letter-spacing:-.02em;">DP</div>
+    <div>
+        <div style="font-size:1.3rem;font-weight:700;color:#1E2761;letter-spacing:-.02em;line-height:1.2;">
+            DistrictPilot AI <span style="font-size:.75rem;color:#29B5E8;font-weight:500;">v8</span>
+        </div>
+        <div style="font-size:.8rem;color:#888;margin-top:1px;">서초/영등포/중구 전입·이사 수요 오케스트레이션</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 try:
     session.sql(
@@ -349,6 +411,7 @@ def build_context_json(
         "TOURISM_DEMAND_IDX", "FOREIGN_VISITOR_IDX",
         "STABILITY_SCORE", "NET_STORE_CHANGE",
         "HOLIDAY_DAYS",
+        "RENTAL_COUNT", "RENTAL_CONVERSION_RATE", "CS_CALLS", "RENTAL_SIGNAL",
     ]
     if scope != "전체" and not lat.empty:
         snap = lat[lat["DISTRICT"] == scope]
@@ -575,6 +638,27 @@ def generate_district_insight(snap: dict, district_name: str) -> str:
     return f"{district_name}: " + " | ".join(signals)
 
 
+def lottie_banner(lottie_url: str, height: int = 100, caption: str = ""):
+    """Embed an animated banner. Uses Lottie with CSS fallback."""
+    html = f"""
+    <div style="display:flex;align-items:center;gap:16px;
+                background:linear-gradient(135deg,#f0f7ff 0%,#e8f4fd 50%,#f0f0ff 100%);
+                border-radius:14px;padding:14px 24px;margin-bottom:8px;
+                border:1px solid #e0e8f5;box-shadow:0 2px 8px rgba(41,181,232,.08);">
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@2/dist/lottie-player.js"></script>
+        <lottie-player src="{lottie_url}" background="transparent"
+            speed="1" style="width:80px;height:80px;min-width:80px;" loop autoplay
+            onerror="this.style.display='none'">
+        </lottie-player>
+        <div style="font-size:.95rem;color:#1E2761;font-weight:600;line-height:1.4;">{caption}</div>
+    </div>"""
+    try:
+        import streamlit.components.v1 as components
+        components.html(html, height=height + 10)
+    except Exception:
+        st.caption(caption)  # Fallback to plain text
+
+
 # ---------------------------------------------------------------------------
 # Session state
 # ---------------------------------------------------------------------------
@@ -615,6 +699,8 @@ tabs = st.tabs(["Capture Plan", "Move-in Signals", "AI Playbook", "Scenario Lab"
 # Tab 1: Allocation
 # ===========================================================================
 with tabs[0]:
+    lottie_banner("https://assets2.lottiefiles.com/packages/lf20_V9t630.json",
+                  100, "📊 AI가 분석한 다음 달 캡처 우선순위")
     if next_ts is not None:
         st.subheader(f"다음 달 전입·이사 수요 캡처 우선순위 ({next_ts.strftime('%Y-%m')})")
     else:
@@ -739,6 +825,8 @@ with tabs[0]:
 # Tab 2: Analysis
 # ===========================================================================
 with tabs[1]:
+    lottie_banner("https://assets5.lottiefiles.com/packages/lf20_kuKkle.json",
+                  100, "🏠 구별 전입·이사 신호 분석")
     if not districts:
         st.warning("Feature Mart 데이터가 없습니다.")
     else:
@@ -794,6 +882,31 @@ with tabs[1]:
                 "공휴일 수",
                 fmt_int(snap.get("HOLIDAY_DAYS", 0)),
             )
+
+            # --- AJD KPIs (when available) ---
+            has_ajd = "RENTAL_COUNT" in latest.columns
+            if has_ajd:
+                st.divider()
+                st.markdown("**AJD 통신/렌탈 신호**")
+                kpi_row3 = st.columns(4)
+                kpi_row3[0].metric(
+                    "렌탈 건수",
+                    fmt_int(snap.get("RENTAL_COUNT", 0)),
+                )
+                kpi_row3[1].metric(
+                    "렌탈 전환율",
+                    f'{safe_float(snap.get("RENTAL_CONVERSION_RATE", 0)):.2%}',
+                )
+                kpi_row3[2].metric(
+                    "CS 인입",
+                    fmt_int(snap.get("CS_CALLS", 0)),
+                )
+                rental_signal = safe_float(snap.get("RENTAL_SIGNAL", 0))
+                kpi_row3[3].metric(
+                    "Rental Signal",
+                    f"{rental_signal:.1f}",
+                    "강함" if rental_signal > 50 else "보통" if rental_signal > 20 else "약함",
+                )
 
             # --- Time series: Population & Spending ---
             st.divider()
@@ -929,6 +1042,10 @@ with tabs[1]:
                     "STABILITY_SCORE",
                     "NET_STORE_CHANGE",
                     "HOLIDAY_DAYS",
+                    "RENTAL_COUNT",
+                    "RENTAL_CONVERSION_RATE",
+                    "CS_CALLS",
+                    "RENTAL_SIGNAL",
                 ]
                 if c in latest.columns
             ]
@@ -941,6 +1058,8 @@ with tabs[1]:
 # Tab 3: AI Agent
 # ===========================================================================
 with tabs[2]:
+    lottie_banner("https://assets9.lottiefiles.com/packages/lf20_fcfjwiyb.json",
+                  100, "🤖 AI 에이전트에게 질문하세요")
     st.subheader("DistrictPilot AI Playbook")
     st.caption(
         "Cortex Analyst(숫자) + AI_COMPLETE(액션) -- "
@@ -1030,6 +1149,8 @@ with tabs[2]:
 # Tab 4: Simulation
 # ===========================================================================
 with tabs[3]:
+    lottie_banner("https://assets1.lottiefiles.com/packages/lf20_iorpbol0.json",
+                  100, "🧪 예산 시나리오를 시뮬레이션하세요")
     st.subheader("전입 수요 캡처 시나리오")
     st.caption("AI 캡처 플랜과 사용자의 집행 시나리오를 비교합니다.")
 
@@ -1186,6 +1307,8 @@ with tabs[3]:
 # Tab 5: Ops / Trust
 # ===========================================================================
 with tabs[4]:
+    lottie_banner("https://assets3.lottiefiles.com/packages/lf20_swnrn2oy.json",
+                  100, "⚙️ 운영 상태 & 데이터 거버넌스")
     st.subheader("운영 / 신뢰성 패널")
 
     # --- Query Tag: set session-level tag for audit trail ---
@@ -1352,7 +1475,7 @@ with tabs[4]:
         """
 - **Streamlit 실행**: Owner's rights (소유자 권한 + 소유자 Warehouse)
 - **Cortex Analyst**: Semantic View 접근 권한 기반 (ACCOUNTADMIN, 커스텀 롤 확장 가능)
-- **Query Tag**: `{"app":"districtpilot_ai","version":"v7"}`
+- **Query Tag**: `{"app":"districtpilot_ai","version":"v8"}`
 - **데이터 격리**: Marketplace 데이터 -> 내부 STG 테이블 복제 (원본 비노출)
 """
     )
@@ -1366,6 +1489,23 @@ with tabs[4]:
 - **스폰서 데이터 규칙**: Marketplace 데이터는 재배포 불가, 내부 분석 전용
 - **외부 데이터 라이선스**: 각 소스별 이용 약관 준수 (아래 표 참조)
 """
+    )
+
+    # --- Data source transparency ---
+    st.divider()
+    st.subheader("데이터 출처 투명성")
+    transparency_data = pd.DataFrame(
+        [
+            {"데이터": "SPH 유동인구/카드소비/자산", "출처": "Snowflake Marketplace (실데이터)", "유형": "실측"},
+            {"데이터": "Richgo 부동산/인구이동", "출처": "Snowflake Marketplace (실데이터)", "유형": "실측"},
+            {"데이터": "공휴일/연령/관광/상권", "출처": "공공데이터 기반 시뮬레이션", "유형": "합성"},
+            {"데이터": "AJD 통신/렌탈", "출처": "업계 통계 기반 시뮬레이션", "유형": "합성"},
+        ]
+    )
+    st.dataframe(transparency_data, use_container_width=True)
+    st.caption(
+        "합성 데이터는 공개 통계와 도메인 지식 기반으로 현실적인 패턴을 재현합니다. "
+        "Production에서는 공공데이터포털 API, AJD Marketplace 실데이터로 자동 교체됩니다."
     )
 
     # --- External data sources ---
@@ -1407,28 +1547,30 @@ with tabs[4]:
     )
     st.dataframe(ext_data, use_container_width=True)
 
-    # --- Operator actions ---
+    # --- Expansion potential: 확장 가능성 ---
     st.divider()
-    use_col_acquire, use_col_operate = st.columns(2)
-    with use_col_acquire:
-        st.subheader("획득 전략")
+    st.subheader("확장 가능성")
+    st.caption("같은 예측 엔진으로 공공 시장까지 확장 가능합니다.")
+    dual_col1, dual_col2 = st.columns(2)
+    with dual_col1:
+        st.markdown("**현재: 홈서비스 사업자**")
         st.markdown(
             """
 - 전입 직후 타깃 캠페인 우선순위
 - 구별 홈서비스/렌탈 오퍼 강도 조정
+- 설치 인력 및 재고 선배치
 - 체험 부스/제휴 채널 집행 계획
-- 상품 번들 및 온보딩 혜택 설계
-- B2B/B2C 혼합 지역 공략 순서 수립
+- CS 대응과 월간 캠페인 조정
 """
         )
-    with use_col_operate:
-        st.subheader("운영 실행")
+    with dual_col2:
+        st.markdown("**확장: 자치구 행정 (Next)**")
         st.markdown(
             """
-- 설치 가능 지역/시간대 사전 점검
-- 현장 설치 인력 및 재고 선배치
-- 관광/오피스 권역 운영 제약 반영
-- CS 대응과 고위험 구역 에스컬레이션
-- 월간 캠페인 후속 조정과 실험 예산 관리
+- 전입신고 창구 확대 (2→4개)
+- 청년 주거 지원금 안내 발송
+- 가족 전입 증가 시 보육시설 사전 준비
+- 고령 전입 시 노인 돌봄 인력 배치
+- 폐업 위기 상권 소상공인 지원금 우선 배정
 """
         )

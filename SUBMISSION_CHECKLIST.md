@@ -9,8 +9,8 @@
 - [ ] 모든 제출물 및 구두 발표: 한국어
 
 ### 코드 ZIP 내용 확인
-- [ ] SQL 파일 8개 (02~11)
-- [ ] streamlit_app_v7.py
+- [ ] SQL 파일 9개 (02~14, 08 AJD 포함)
+- [ ] streamlit_app_v8.py
 - [ ] README.md (실행 순서, 아키텍처, 데이터 소스)
 - [ ] DEMO_SCRIPT.md
 - [ ] PPT 파일
@@ -22,7 +22,7 @@
 |---|---------|------|-------------|
 | 1 | SPH | Snowflake Marketplace - 스폰서 제공 | Snowflake Marketplace |
 | 2 | Richgo | Snowflake Marketplace - 스폰서 제공 | Snowflake Marketplace |
-| 3 | AJD *(Optional — 별도 통합 필요)* | Snowflake Marketplace - 스폰서 제공 | Snowflake Marketplace |
+| 3 | AJD (통합 완료 — 합성 fallback) | Snowflake Marketplace - 스폰서 제공 | Snowflake Marketplace |
 | 4 | 한국천문연구원 특일 정보 API | 공공누리 1유형 | https://www.data.go.kr |
 | 5 | 행정안전부 주민등록 인구통계 | 공공누리 1유형 | https://jumin.mois.go.kr |
 
@@ -41,14 +41,15 @@
 - [ ] 11_ablation_study.sql 실행 완료
 - [ ] 06_semantic_view.sql 실행 완료
 - [ ] 09_cortex_search_agent.sql 실행 완료
+- [ ] 08_ajd_integration.sql 실행 완료 (STG_TELECOM + FEATURE_MART_V3)
 - [ ] 07_dynamic_tables_tasks.sql 실행 완료
-- [ ] streamlit_app_v7.py 배포 완료
+- [ ] streamlit_app_v8.py 배포 완료
 
 ### 증거 화면 확인 (앱에서)
 - [ ] Allocation 탭: 배분 추천 %, Actual vs Forecast overlay
 - [ ] Allocation 탭: Ablation MAPE 차트 (A→E)
 - [ ] Allocation 탭: 평가 지표 (MAPE/SMAPE/MAE)
-- [ ] Analysis 탭: KPI + 연령구조 + Feature Importance
+- [ ] Analysis 탭: 인사이트 콜아웃 + KPI + AJD 렌탈 신호 + Feature Importance
 - [ ] AI Agent 탭: AI_COMPLETE structured output 동작
 - [ ] Simulation 탭: 예산 슬라이더 + AI 코멘트
 - [ ] Ops/Trust 탭: Health panel + 보안 모델 + 데이터 거버넌스
@@ -78,7 +79,7 @@
 
 ### 결선 대비 (4/29 서울)
 - [ ] 10분 발표 리허설 2회 이상
-- [ ] Q&A 5문항 답변 준비 (DEMO_SCRIPT.md)
+- [ ] Q&A 7문항 답변 준비 (DEMO_SCRIPT.md)
 - [ ] 노트북 + 충전기 + HDMI 어댑터
 
 ## 일정

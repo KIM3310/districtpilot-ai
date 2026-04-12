@@ -4,7 +4,8 @@
 
   Purpose: Stand up a Cortex Search service over internal policy/rulebook
            documents, then wire it together with Cortex Analyst (Semantic View)
-           and a custom tool via the Cortex Agent API.
+           and a custom tool via the Cortex Agent API for move-in/home-service
+           orchestration.
 
   Target Districts: 서초구, 영등포구, 중구
   Schema: DISTRICTPILOT_AI.ANALYTICS
@@ -13,7 +14,7 @@
 -- ============================================================
 -- 0. Session Setup
 -- ============================================================
-USE ROLE SYSADMIN;
+USE ROLE ACCOUNTADMIN;
 USE WAREHOUSE COMPUTE_WH;
 USE DATABASE DISTRICTPILOT_AI;
 USE SCHEMA ANALYTICS;
@@ -24,7 +25,7 @@ USE SCHEMA ANALYTICS;
 CREATE OR REPLACE TABLE POLICY_DOCUMENTS (
     DOC_ID        VARCHAR(20)   NOT NULL,
     TITLE         VARCHAR(200)  NOT NULL,
-    CATEGORY      VARCHAR(30)   NOT NULL,   -- rental_policy | marketing_rule | public_admin | product_guide | cs_policy
+    CATEGORY      VARCHAR(30)   NOT NULL,   -- rental_policy | move_in_rule | installation_rule | product_guide | cs_policy
     CONTENT       VARCHAR(8000) NOT NULL,
     DISTRICT      VARCHAR(20),              -- NULL = company-wide
     UPDATED_AT    TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
@@ -48,50 +49,49 @@ VALUES
 6. 제외 지역: 재개발 구역 내 철거 예정 건물, 군사시설 보호구역.',
  NULL),
 
--- 2-2. 마케팅 예산 배분 원칙
+-- 2-2. 전입 수요 캡처 집행 원칙
 ('POL-002',
- '마케팅 예산 배분 기본 원칙',
- 'marketing_rule',
- '1. 총 마케팅 예산은 전월 매출액의 8~12% 범위 내에서 집행한다.
-2. 자치구별 배분 비율은 해당 구의 전월 매출 비중 + 순이동 인구 성장률을 가중 반영한다.
-3. 서초구: 고소득 타겟 프리미엄 채널(잡지, 프리미엄 옥외광고) 비중 40% 이상 권장.
-4. 영등포구: 오피스 밀집 특성상 B2B 제안서 및 기업 대상 프로모션에 예산 30% 이상 배정.
-5. 중구: 관광객 유동 인구 활용 체험 부스, 팝업 스토어 중심으로 예산 25% 이상 배정.
-6. 신규 캠페인 론칭 시 A/B 테스트 비용으로 전체 예산의 5%를 별도 확보해야 한다.',
+ '전입 수요 캡처 집행 기본 원칙',
+ 'move_in_rule',
+ '1. 총 집행 예산은 전월 실적의 8~12% 범위 내에서 설정한다.
+2. 자치구별 집행 강도는 다음 달 forecast + 순이동 + 카드소비 반응을 함께 반영한다.
+3. 서초구: 프리미엄 가구/신혼부부 타깃 오퍼와 제휴 채널 비중을 높인다.
+4. 영등포구: 오피스/주거 혼합 특성을 반영해 B2B 제안과 B2C 체험 오퍼를 병행한다.
+5. 중구: 관광/단기 체류 변동성이 높으므로 팝업형 체험과 단기 프로모션 비중을 높인다.
+6. 신규 집행안은 항상 5% 수준의 실험 예산을 별도 확보한다.',
  NULL),
 
--- 2-3. 서초구 상권 활성화 지원 정책
+-- 2-3. 서초구 전입 직후 오퍼 가이드
 ('POL-003',
- '서초구 상권 활성화 지원 정책',
- 'public_admin',
- '1. 서초구청은 연 2회(상반기/하반기) 소상공인 상권 활성화 보조금을 지급한다.
-2. 대상: 서초구 소재 사업장 중 연매출 3억 원 이하 사업체.
-3. 지원 금액: 업체당 최대 500만 원 (마케팅비, 인테리어비, 컨설팅비 포함).
-4. 신청 방법: 서초구청 경제과 온라인 접수 → 현장 실사 → 심사위원회 → 확정 통보.
-5. DistrictPilot 활용: 상권 분석 데이터 기반으로 보조금 신청서 내 시장 분석 항목을 자동 생성.',
+ '서초구 전입 직후 오퍼 가이드',
+ 'move_in_rule',
+ '1. 반포·잠원·서초동 권역은 고소득 가구와 가족 단위 전입 비중이 높다.
+2. 초기 오퍼는 프리미엄 정수기, 공기청정기, 홈케어 번들을 우선 제안한다.
+3. 첫 접점은 디지털 광고보다 소개/제휴/컨시어지 채널 효율이 높다.
+4. 계약 전환 목표는 체험 신청 -> 설치 예약 -> 패키지 업셀 순서로 설계한다.
+5. 설치 전 현장 점검이 필요한 고가 주거지는 예약 확정 전에 스케줄 슬롯을 선확보한다.',
  '서초구'),
 
--- 2-4. 영등포구 소상공인 지원금 우선순위 기준
+-- 2-4. 영등포구 오피스/주거 혼합권 리드 라우팅 규칙
 ('POL-004',
- '영등포구 소상공인 지원금 우선순위 기준',
- 'public_admin',
- '1. 영등포구 소상공인 지원금은 분기별 선착순 + 가점제 혼합 방식으로 운영한다.
-2. 가점 항목: (a) 업력 5년 이상 +10점, (b) 고용 인원 3인 이상 +5점,
-   (c) 디지털 전환 계획 보유 +8점, (d) 친환경 인증 보유 +3점.
-3. 우선 지원 업종: 생활 서비스(세탁, 렌탈, 수리), 외식업, 소매업.
-4. 지원 한도: 업체당 연간 최대 800만 원.
-5. 렌탈 사업자 특이사항: 렌탈 계약 건수 증빙 시 디지털 전환 가점 자동 부여.',
+ '영등포구 오피스/주거 혼합권 리드 라우팅 규칙',
+ 'move_in_rule',
+ '1. 여의도/문래/당산 권역은 B2B와 B2C 리드가 혼재하므로 최초 문의 단계에서 용도 구분이 필요하다.
+2. 영업일 주간에는 B2B 제안, 퇴근 시간대와 주말에는 B2C 체험 오퍼 효율이 높다.
+3. 오피스 밀집 지역은 설치 가능 시간대 제약이 크므로 예약 전 건물 운영 규정을 확인한다.
+4. 신규 리드 라우팅은 법인/가정/소형사업장 세 그룹으로 우선 분기한다.
+5. 설치 일정이 길어질 가능성이 높은 리드는 보상 쿠폰보다 빠른 일정 확보를 우선 제안한다.',
  '영등포구'),
 
--- 2-5. 중구 관광 인프라 배치 가이드
+-- 2-5. 중구 관광·단기체류 권역 설치 운영 가이드
 ('POL-005',
- '중구 관광 인프라 배치 가이드',
- 'public_admin',
- '1. 중구 관광특구(명동, 남대문, 을지로) 내 인프라 배치는 관광과 협의 필수.
-2. 체험형 장비(정수기 시음대, 공기질 측정 부스 등) 설치 시 관광특구 조례에 따른 허가 필요.
-3. 배치 우선 순위: 명동역 반경 300m > 을지로입구역 > 충무로역 > 남대문시장 입구.
-4. 운영 시간: 관광특구 내 옥외 장비는 09:00~21:00, 실내 장비는 건물 운영 시간에 준함.
-5. 계절별 가이드: 하절기(6~8월) 냉음수기 프로모션, 동절기(12~2월) 공기청정기 체험 강화.',
+ '중구 관광·단기체류 권역 설치 운영 가이드',
+ 'installation_rule',
+ '1. 명동·남대문·을지로 권역은 단기 체류와 관광 유입 변동이 커서 장기 계약 전환율만으로 판단하면 왜곡된다.
+2. 체험형 오퍼와 단기 프로모션은 허용되지만, 현장 운영 시간과 보관 공간 제약을 먼저 확인해야 한다.
+3. 을지로 3~4가 일대는 주차 제한과 하역 제약으로 설치 스케줄 사전 조율이 필수다.
+4. 피크 관광 시즌에는 설치 리드타임보다 현장 대기시간과 회수 동선을 먼저 점검한다.
+5. 중구 권역은 체험 -> 즉시 상담 -> 빠른 설치 예약 전환 흐름으로 운영하는 것이 유리하다.',
  '중구'),
 
 -- 2-6. 렌탈 상품 마진율 기준표
@@ -145,7 +145,7 @@ SHOW CORTEX SEARCH SERVICES;
 
 -- ============================================================
 -- 4. Custom Tool: RECOMMEND_ALLOCATION Stored Procedure
---    Returns a JSON recommendation for marketing budget allocation
+--    Returns a JSON recommendation for move-in capture orchestration
 --    based on district performance metrics.
 -- ============================================================
 CREATE OR REPLACE PROCEDURE RECOMMEND_ALLOCATION(
@@ -164,14 +164,15 @@ BEGIN
         'district',        :P_DISTRICT,
         'total_budget_krw', :P_BUDGET_KRW,
         'recommended_split', OBJECT_CONSTRUCT(
-            'digital_ads',        ROUND(:P_BUDGET_KRW * 0.30),
-            'offline_promo',      ROUND(:P_BUDGET_KRW * 0.25),
-            'b2b_outreach',       ROUND(:P_BUDGET_KRW * 0.20),
-            'experiential_booth', ROUND(:P_BUDGET_KRW * 0.15),
-            'ab_test_reserve',    ROUND(:P_BUDGET_KRW * 0.05),
-            'contingency',        ROUND(:P_BUDGET_KRW * 0.05)
+            'digital_capture',    ROUND(:P_BUDGET_KRW * 0.25),
+            'partner_referrals',  ROUND(:P_BUDGET_KRW * 0.20),
+            'b2b_outreach',       ROUND(:P_BUDGET_KRW * 0.15),
+            'experiential_offer', ROUND(:P_BUDGET_KRW * 0.15),
+            'installation_buffer',ROUND(:P_BUDGET_KRW * 0.15),
+            'test_reserve',       ROUND(:P_BUDGET_KRW * 0.10)
         ),
         'basis', OBJECT_CONSTRUCT(
+            'move_in',       f.MOVE_IN,
             'total_sales',   f.TOTAL_SALES,
             'net_move',      f.NET_MOVE,
             'sales_per_pop', f.SALES_PER_POP,
@@ -179,7 +180,7 @@ BEGIN
         ),
         'generated_at', CURRENT_TIMESTAMP()
     ) INTO :v_result
-    FROM FEATURE_MART_FINAL f
+    FROM FEATURE_MART_V2 f
     WHERE f.DISTRICT = :P_DISTRICT
     ORDER BY f.YM DESC
     LIMIT 1;
@@ -224,7 +225,7 @@ BEGIN
     v_messages := '[
         {
             "role": "system",
-            "content": "You are DistrictPilot AI Agent, an expert assistant for rental business analytics in Seoul districts (서초구, 영등포구, 중구). You can: (1) query structured data via Cortex Analyst on the DISTRICTPILOT_SV semantic view, (2) look up internal policies and rulebooks via Cortex Search, and (3) generate budget allocation recommendations. Always answer in Korean unless asked otherwise."
+            "content": "You are DistrictPilot AI Agent, an expert assistant for move-in driven home-service and rental orchestration in Seoul districts (서초구, 영등포구, 중구). You can: (1) query structured data via Cortex Analyst on the DISTRICTPILOT_SV semantic view, (2) look up internal policies and rulebooks via Cortex Search, and (3) generate district-level capture plan recommendations. Always answer in Korean unless asked otherwise."
         },
         {
             "role": "user",
@@ -246,7 +247,7 @@ BEGIN
             "type": "cortex_search",
             "tool_definition": {
                 "name": "policy_search",
-                "description": "Search internal policy documents, rulebooks, and guidelines. Use for questions about rental policies, marketing rules, public administration support, product pricing, or customer service escalation procedures.",
+                "description": "Search internal policy documents, rulebooks, and guidelines. Use for questions about rental policies, move-in capture rules, installation constraints, product pricing, or customer service escalation procedures.",
                 "cortex_search_service": "DISTRICTPILOT_AI.ANALYTICS.DISTRICTPILOT_SEARCH_SVC",
                 "max_results": 3,
                 "title_column": "TITLE",
@@ -257,7 +258,7 @@ BEGIN
             "type": "function",
             "tool_definition": {
                 "name": "recommend_allocation",
-                "description": "Generate a recommended marketing budget allocation for a given district and total budget (KRW). Returns a JSON object with channel-level splits and the underlying data basis.",
+                "description": "Generate a recommended move-in capture plan for a given district and total budget (KRW). Returns a JSON object with channel-level splits and the underlying data basis.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -267,7 +268,7 @@ BEGIN
                         },
                         "budget_krw": {
                             "type": "number",
-                            "description": "Total marketing budget in KRW"
+                            "description": "Total execution budget in KRW"
                         }
                     },
                     "required": ["district", "budget_krw"]
@@ -298,11 +299,11 @@ SELECT SNOWFLAKE.CORTEX.COMPLETE(
     [
         {
             'role': 'system',
-            'content': 'You are DistrictPilot AI Agent. Use the provided tools to answer questions about rental business analytics and internal policies for Seoul districts.'
+            'content': 'You are DistrictPilot AI Agent. Use the provided tools to answer questions about move-in driven home-service demand and internal operating policies for Seoul districts.'
         },
         {
             'role': 'user',
-            'content': '영등포구의 최근 3개월 매출 추이를 알려주고, 소상공인 지원금 신청 시 가점 항목도 알려줘.'
+            'content': '영등포구의 최근 3개월 매출 추이를 알려주고, 설치 제약과 리드 라우팅 규칙도 알려줘.'
         }
     ],
     {
@@ -337,14 +338,14 @@ CALL DISTRICTPILOT_AGENT('정수기 렌탈 설치가 안 되는 지역이 있나
 -- Test 2: Structured data via Analyst - 매출 분석
 CALL DISTRICTPILOT_AGENT('서초구, 영등포구, 중구의 최근 6개월 매출 비교를 보여줘.');
 
--- Test 3: Policy search - 마케팅 규정
-CALL DISTRICTPILOT_AGENT('마케팅 예산을 어떤 기준으로 배분해야 하나요?');
+-- Test 3: Policy search - 전입 수요 집행 규정
+CALL DISTRICTPILOT_AGENT('전입 수요를 잡기 위한 집행 강도는 어떤 기준으로 정해야 하나요?');
 
--- Test 4: Custom tool - 예산 배분 추천
-CALL DISTRICTPILOT_AGENT('영등포구에 5천만 원 마케팅 예산을 배분하려면 어떻게 해야 할까요?');
+-- Test 4: Custom tool - 캡처 플랜 추천
+CALL DISTRICTPILOT_AGENT('영등포구에 5천만 원 집행 예산을 투입한다면 어떤 캡처 플랜이 적절할까요?');
 
 -- Test 5: Multi-tool - Analyst + Search 복합 질의
-CALL DISTRICTPILOT_AGENT('중구 관광특구 내 렌탈 장비 배치 규정을 알려주고, 최근 중구 매출 예측 결과도 보여줘.');
+CALL DISTRICTPILOT_AGENT('중구 관광 권역 설치 운영 가이드를 알려주고, 최근 중구 수요 예측 결과도 보여줘.');
 
 -- Test 6: CS policy lookup
 CALL DISTRICTPILOT_AGENT('고객이 강하게 불만을 제기하면 어떤 보상을 할 수 있나요?');

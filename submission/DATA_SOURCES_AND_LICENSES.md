@@ -19,11 +19,14 @@
 | 관광수요/외래객 지수 | 한국관광 데이터랩 | 시도/월별 | 2019-2024 | 관광 수요 Feature | 공공누리 1유형 (출처 표시) | https://datalab.visitkorea.or.kr |
 | 상권변화지표 | 서울시 상권분석서비스 | 구/분기별 | 2019-2024 | 상권 안정성 Feature | 공공누리 1유형 (출처 표시) | https://golmok.seoul.go.kr |
 
-## Optional (미통합)
+## AJD 통신/렌탈 (통합 완료)
 
-| Dataset | Provider | Status | Note |
-|---------|----------|--------|------|
-| 통신 가입/계약/렌탈 | AJD | 별도 통합 필요 | 08_ajd_integration.sql 참조 (로드맵) |
+| Dataset | Provider | Grain | Period | Purpose | License |
+|---------|----------|-------|--------|---------|---------|
+| 통신 가입/계약/렌탈/CS | AJD | 시군구 → 구 배분 | 2019-2024 (월) | 렌탈 전환율, CS 인입, RENTAL_SIGNAL | Snowflake Marketplace |
+
+> **투명성 노트**: 현재 AJD 데이터는 업계 통계 기반 합성 데이터입니다 (인구비례 배분 적용).
+> Production에서는 AJD Marketplace 실데이터로 교체합니다.
 
 ## 라이선스 준수 확인
 
@@ -32,3 +35,5 @@
 - [x] 외부 공개 데이터: 모두 공공누리 1유형 (상업적 이용 가능, 출처 표시 의무)
 - [x] 외부 데이터 출처: SQL 코드 내 주석 및 본 문서에 명시
 - [x] 외부 라이브러리: Streamlit, Pandas (Snowflake 내장)
+- [x] 합성 데이터: 외부 공개 + AJD 데이터는 합성임을 README/앱에서 명시
+- [x] Production 교체 경로: API/Marketplace 실데이터 파이프라인 설계 완료

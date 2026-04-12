@@ -34,7 +34,7 @@ CREATE OR REPLACE SEMANTIC VIEW DISTRICTPILOT_SV
       SELECT *
       FROM DISTRICTPILOT_AI.ANALYTICS.FEATURE_MART_V2
     )
-      PRIMARY KEY (YM, DISTRICT)
+      -- PRIMARY KEY (YM, DISTRICT)  -- removed for compatibility
       WITH SYNONYMS = ('피쳐마트', '피처마트', 'feature mart', '마트')
 
       -- Dimensions
@@ -320,7 +320,7 @@ CREATE OR REPLACE SEMANTIC VIEW DISTRICTPILOT_SV
         UPPER_BOUND
       FROM DISTRICTPILOT_AI.ANALYTICS.FORECAST_RESULTS
     )
-      PRIMARY KEY (DISTRICT, DS)
+      -- PRIMARY KEY (DISTRICT, DS)  -- removed for compatibility
       WITH SYNONYMS = ('예측', '포캐스트', 'forecast', '예측결과')
 
       COLUMNS (
@@ -335,7 +335,7 @@ CREATE OR REPLACE SEMANTIC VIEW DISTRICTPILOT_SV
 
       COLUMNS (
         NEXT_MONTH_FORECAST
-          COMMENT 'Forecasted value for next period, used for budget allocation (다음달 예측값, 배분 기준)'
+          COMMENT 'Forecasted value for next period, used for capture prioritization (다음달 예측값, 집행 우선순위 기준)'
           WITH SYNONYMS = ('예측값', '다음달예측', '포캐스트값', 'forecast값')
           AS METRIC,
 
@@ -357,7 +357,7 @@ CREATE OR REPLACE SEMANTIC VIEW DISTRICTPILOT_SV
       SELECT *
       FROM DISTRICTPILOT_AI.ANALYTICS.ACTUAL_VS_FORECAST
     )
-      PRIMARY KEY (DISTRICT, DS)
+      -- PRIMARY KEY (DISTRICT, DS)  -- removed for compatibility
       WITH SYNONYMS = ('실적대비예측', '백테스트', 'actual_forecast', '예측정확도')
 
       COLUMNS (
@@ -405,25 +405,25 @@ CREATE OR REPLACE SEMANTIC VIEW DISTRICTPILOT_SV
   -- FACTS / COMPUTED METRICS
   -- ---------------------------------------------------------
   METRICS (
-    -- Allocation percentage: district forecast / sum of all forecasts
+    -- Capture intensity percentage: district forecast / sum of all forecasts
     ALLOCATION_PCT AS (
       FORECAST.NEXT_MONTH_FORECAST
       / NULLIF(SUM(FORECAST.NEXT_MONTH_FORECAST) OVER (), 0)
       * 100
     )
-      COMMENT '마케팅 예산 배분 비율 (%) = 해당 구 예측값 / 전체 예측값 합계 * 100'
-      WITH SYNONYMS = ('배분비율', '배분율', '할당비율', '예산배분', 'allocation')
+      COMMENT '집행 강도 비율 (%) = 해당 구 예측값 / 전체 예측값 합계 * 100'
+      WITH SYNONYMS = ('배분비율', '배분율', '할당비율', '집행강도', 'allocation')
   )
 
   -- ---------------------------------------------------------
   -- AI SQL GENERATION INSTRUCTIONS
   -- ---------------------------------------------------------
-  COMMENT = 'DistrictPilot AI 시맨틱 뷰 - 서울시 서초구/영등포구/중구 대상 임대마케팅 예산배분 엔진'
+  COMMENT = 'DistrictPilot AI 시맨틱 뷰 - 서울시 서초구/영등포구/중구 대상 전입·이사 기반 홈서비스 수요 오케스트레이션 엔진'
 
   AI_SQL_GENERATION (
     INSTRUCTIONS = '
-      1. 배분 질문은 다음 달 forecast 기준으로 ALLOCATION_PCT를 사용하여 답변한다.
-         예: "서초구 배분 비율은?" → FORECAST 테이블의 NEXT_MONTH_FORECAST 기반 ALLOCATION_PCT 산출.
+      1. 집행 강도 질문은 다음 달 forecast 기준으로 ALLOCATION_PCT를 사용하여 답변한다.
+         예: "서초구 집행 강도는?" → FORECAST 테이블의 NEXT_MONTH_FORECAST 기반 ALLOCATION_PCT 산출.
       2. 비교 질문은 district level aggregate로 답변한다.
          예: "영등포구와 중구 매출 비교" → FEATURE_MART에서 DISTRICT별 GROUP BY.
       3. 숫자는 반올림 규칙 통일: 비율은 ROUND(x, 1), 금액은 ROUND(x, 0).
@@ -438,7 +438,7 @@ CREATE OR REPLACE SEMANTIC VIEW DISTRICTPILOT_SV
       10. 최신 데이터 요청 시 MAX(YM) 또는 MAX(DS) 서브쿼리를 사용.
       11. 복합 질문(예: "자산 대비 매출이 가장 높은 구")은 파생 컬럼을 CTE로 구성.
       12. 질문에 기간이 명시되지 않으면 다음 달 forecast 기준으로 답변한다.
-          예: "1순위 구는?" → FORECAST 테이블에서 NEXT_MONTH_FORECAST가 가장 높은 구.
+          예: "어느 구를 먼저 공략해야 해?" → FORECAST 테이블에서 NEXT_MONTH_FORECAST가 가장 높은 구.
       13. 질문에 구 이름이 없으면 clarification을 요청한다.
           예: "매출이 얼마야?" → "어느 구의 매출을 조회할까요? (서초구, 영등포구, 중구)"
           단, 전체 비교/순위 질문은 3개 구 모두 조회.
@@ -449,8 +449,8 @@ CREATE OR REPLACE SEMANTIC VIEW DISTRICTPILOT_SV
     INSTRUCTIONS = '
       질문을 아래 카테고리로 분류한다:
 
-      [배분/할당] - 예산 배분, 마케팅 할당, 투자 비율 관련
-        예: "다음 달 예산을 어떻게 배분할까?", "서초구 할당 비율은?"
+      [배분/할당] - 집행 강도, 우선순위, 채널 할당 관련
+        예: "다음 달 어느 구를 먼저 공략할까?", "서초구 집행 강도는?"
         → FORECAST + ALLOCATION_PCT 사용
 
       [비교/분석] - 구별 지표 비교, 순위, 랭킹

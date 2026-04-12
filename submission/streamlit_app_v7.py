@@ -1,18 +1,29 @@
 """
-DistrictPilot AI v7 — Competition-Winning Snowflake-native Decision Agent
-서초/영등포/중구 수요·배분 의사결정 에이전트
+DistrictPilot AI v8 — Competition-Winning Snowflake-native Move-in Demand Engine
+서초/영등포/중구 전입·이사 기반 홈서비스 수요 오케스트레이션 에이전트
 
 Architecture:
   FEATURE_MART_V2 (holiday + demographics + tourism + commercial)
-  Snowflake ML FORECAST -> evaluation metrics + feature importance
+  Snowflake ML FORECAST (auto-resolved live model) -> evaluation metrics + feature importance
   ABLATION_RESULTS -> model improvement evidence
   AI_COMPLETE structured output -> action cards with fallback
+  Cortex Search -> policy document grounding with citations
   Dynamic Tables + Tasks -> operational freshness
   V_APP_HEALTH -> real-time ops monitoring
 
-Tabs: Allocation | Analysis | AI Agent | Simulation | Ops/Trust
+Tabs: Capture Plan | Move-in Signals | AI Playbook | Scenario Lab | Ops/Trust
+
+v8 changes:
+  - Confidence interval bands on forecast chart
+  - Ablation MAPE improvement delta metrics
+  - Cortex Search citation display in AI Playbook
+  - Per-district insight callouts in Move-in Signals
+  - Deviation alerts in Scenario Lab
+  - SQL injection fix in fallback LLM call
 """
 import json
+from typing import List, Tuple
+
 import pandas as pd
 import streamlit as st
 from snowflake.snowpark.context import get_active_session
@@ -20,18 +31,25 @@ from snowflake.snowpark.context import get_active_session
 # ---------------------------------------------------------------------------
 # Config constants
 # ---------------------------------------------------------------------------
-# V2 includes external data; falls back to FINAL if V2 doesn't exist yet
-FEATURE_MART_FQN = "DISTRICTPILOT_AI.ANALYTICS.FEATURE_MART_V2"
-FEATURE_MART_FALLBACK = "DISTRICTPILOT_AI.ANALYTICS.FEATURE_MART_FINAL"
+# Prefer the latest live objects, but tolerate legacy names so the app remains
+# stable across demo environments and handoff states.
+FEATURE_MART_CANDIDATES = [
+    "DISTRICTPILOT_AI.ANALYTICS.FEATURE_MART_V2",
+    "DISTRICTPILOT_AI.ANALYTICS.FEATURE_MART_FINAL",
+]
 FORECAST_RESULTS_FQN = "DISTRICTPILOT_AI.ANALYTICS.FORECAST_RESULTS"
 AVF_FQN = "DISTRICTPILOT_AI.ANALYTICS.ACTUAL_VS_FORECAST"
-FORECAST_MODEL_FQN = "DISTRICTPILOT_AI.ANALYTICS.DISTRICTPILOT_FORECAST"
+FORECAST_MODEL_CANDIDATES = [
+    "DISTRICTPILOT_AI.ANALYTICS.DISTRICTPILOT_FORECAST_V2",
+    "DISTRICTPILOT_AI.ANALYTICS.DISTRICTPILOT_FORECAST",
+]
 SEMANTIC_VIEW_FQN = "DISTRICTPILOT_AI.ANALYTICS.DISTRICTPILOT_SV"
 HEALTH_VIEW_FQN = "DISTRICTPILOT_AI.ANALYTICS.V_APP_HEALTH"
 ABLATION_FQN = "DISTRICTPILOT_AI.ANALYTICS.ABLATION_RESULTS"
 EVAL_METRICS_FQN = "DISTRICTPILOT_AI.ANALYTICS.EVAL_METRICS_A"
 FEATURE_IMPORTANCE_FQN = "DISTRICTPILOT_AI.ANALYTICS.FEATURE_IMPORTANCE"
 LLM_MODEL = "mistral-large2"
+SEARCH_SERVICE_FQN = "DISTRICTPILOT_AI.ANALYTICS.DISTRICTPILOT_SEARCH_SVC"
 
 DISTRICTS_KR = {"서초구": "서초구", "영등포구": "영등포구", "중구": "중구"}
 
@@ -49,7 +67,17 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown("#### DistrictPilot AI — 서초/영등포/중구 수요·배분 의사결정 에이전트 &nbsp;|&nbsp; v7")
+st.markdown(
+    "#### DistrictPilot AI — 서초/영등포/중구 전입·이사 수요 오케스트레이션 &nbsp;|&nbsp; v8"
+)
+
+try:
+    session.sql(
+        "ALTER SESSION SET QUERY_TAG = "
+        "'{\"app\":\"districtpilot_ai\",\"version\":\"v8\",\"entrypoint\":\"app_init\"}'"
+    ).collect()
+except Exception:
+    pass
 
 # ---------------------------------------------------------------------------
 # Utility / helper functions
@@ -61,12 +89,37 @@ def load_df(_session, sql: str) -> pd.DataFrame:
     return _session.sql(sql).to_pandas()
 
 
+def attempt_read(sql: str) -> Tuple[pd.DataFrame, bool]:
+    """Execute SQL and return both the frame and whether execution succeeded."""
+    try:
+        return load_df(session, sql), True
+    except Exception:  # noqa: BLE001 – intentional catch-all for resilient UI
+        return pd.DataFrame(), False
+
+
 def safe_read(sql: str) -> pd.DataFrame:
     """Execute SQL with graceful error handling. Returns empty DataFrame on failure."""
-    try:
-        return load_df(session, sql)
-    except Exception:  # noqa: BLE001 – intentional catch-all for resilient UI
-        return pd.DataFrame()
+    df, _ = attempt_read(sql)
+    return df
+
+
+def resolve_first_usable(candidates: List[str], sql_builder) -> Tuple[pd.DataFrame, str]:
+    """
+    Return the first candidate that executes successfully, preferring one that
+    also returns rows.
+    """
+    first_success_df = None
+    first_success_name = candidates[0]
+    for name in candidates:
+        df, ok = attempt_read(sql_builder(name))
+        if ok and first_success_df is None:
+            first_success_df = df
+            first_success_name = name
+        if ok and not df.empty:
+            return df, name
+    if first_success_df is not None:
+        return first_success_df, first_success_name
+    return pd.DataFrame(), candidates[0]
 
 
 def clean_variant(value) -> str:
@@ -105,14 +158,10 @@ def safe_float(value, default=0.0) -> float:
 # Data loading
 # ---------------------------------------------------------------------------
 
-# Try FEATURE_MART_V2 first; if it doesn't exist, fall back to FEATURE_MART_FINAL
-feature_mart = safe_read(f"""
-    SELECT * FROM {FEATURE_MART_FQN} ORDER BY YM, DISTRICT
-""")
-if feature_mart.empty:
-    feature_mart = safe_read(f"""
-        SELECT * FROM {FEATURE_MART_FALLBACK} ORDER BY YM, DISTRICT
-    """)
+feature_mart, active_feature_mart_fqn = resolve_first_usable(
+    FEATURE_MART_CANDIDATES,
+    lambda fqn: f"SELECT * FROM {fqn} ORDER BY YM, DISTRICT",
+)
 
 forecast_raw = safe_read(f"""
     SELECT SERIES AS DISTRICT, TS, FORECAST, LOWER_BOUND, UPPER_BOUND
@@ -126,17 +175,22 @@ avf_raw = safe_read(f"""
     ORDER BY DS, DISTRICT
 """)
 
-eval_raw = safe_read(f"""
-    SELECT * FROM TABLE({FORECAST_MODEL_FQN}!SHOW_EVALUATION_METRICS())
-""")
+eval_raw, active_forecast_model_fqn = resolve_first_usable(
+    FORECAST_MODEL_CANDIDATES,
+    lambda fqn: f"SELECT * FROM TABLE({fqn}!SHOW_EVALUATION_METRICS())",
+)
+eval_from_model = not eval_raw.empty
 if eval_raw.empty:
     eval_raw = safe_read(f"SELECT * FROM {EVAL_METRICS_FQN}")
 
-fi_raw = safe_read(f"""
-    SELECT * FROM TABLE({FORECAST_MODEL_FQN}!EXPLAIN_FEATURE_IMPORTANCE())
-""")
+fi_raw, fi_model_fqn = resolve_first_usable(
+    FORECAST_MODEL_CANDIDATES,
+    lambda fqn: f"SELECT * FROM TABLE({fqn}!EXPLAIN_FEATURE_IMPORTANCE())",
+)
 if fi_raw.empty:
     fi_raw = safe_read(f"SELECT * FROM {FEATURE_IMPORTANCE_FQN}")
+elif not eval_from_model:
+    active_forecast_model_fqn = fi_model_fqn
 
 health_raw = safe_read(f"SELECT * FROM {HEALTH_VIEW_FQN}")
 
@@ -145,6 +199,14 @@ ablation_raw = safe_read(f"SELECT * FROM {ABLATION_FQN}")
 if feature_mart.empty and forecast_raw.empty:
     st.error("데이터 로딩 실패. 테이블명/권한을 확인하세요.")
     st.stop()
+
+active_feature_mart_name = active_feature_mart_fqn.rsplit(".", maxsplit=1)[-1]
+active_forecast_model_name = active_forecast_model_fqn.rsplit(".", maxsplit=1)[-1]
+st.caption(
+    f"Live objects: Feature Mart `{active_feature_mart_name}` | "
+    f"Forecast `{active_forecast_model_name}` | "
+    f"Semantic View `DISTRICTPILOT_SV`"
+)
 
 # ---------------------------------------------------------------------------
 # Derived dataframes
@@ -217,12 +279,20 @@ def build_eval_pivot(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return pd.DataFrame()
     out = df.copy()
+    if "METRIC" in out.columns and "ERROR_METRIC" not in out.columns:
+        out = out.rename(columns={"METRIC": "ERROR_METRIC"})
+    if "VALUE" in out.columns and "METRIC_VALUE" not in out.columns:
+        out = out.rename(columns={"VALUE": "METRIC_VALUE"})
+    if "SERIES" not in out.columns:
+        out["SERIES"] = "ALL"
     if "SERIES" in out.columns:
         out["SERIES"] = out["SERIES"].apply(clean_variant)
     if "ERROR_METRIC" in out.columns:
         out["ERROR_METRIC"] = (
             out["ERROR_METRIC"].astype(str).str.replace('"', "", regex=False)
         )
+    if "METRIC_VALUE" not in out.columns:
+        return pd.DataFrame()
     return (
         out.pivot_table(
             index="SERIES",
@@ -273,7 +343,7 @@ def build_context_json(
 
     # Snapshot payload — extended columns
     snap_cols = [
-        "DISTRICT", "TOTAL_POP", "TOTAL_SALES", "NET_MOVE",
+        "DISTRICT", "MOVE_IN", "MOVE_OUT", "NET_MOVE", "TOTAL_POP", "TOTAL_SALES",
         "AVG_ASSET", "AVG_MEME_PRICE",
         "AGE_20_39_SHARE", "SENIOR_60P_SHARE",
         "TOURISM_DEMAND_IDX", "FOREIGN_VISITOR_IDX",
@@ -394,6 +464,10 @@ def call_ai_complete(question: str, context_json: str) -> dict:
     """AI_COMPLETE with structured output. Falls back to CORTEX.COMPLETE."""
     prompt = f"""당신은 DistrictPilot AI의 한국어 의사결정 보조 모델이다.
 
+역할:
+- 전입·이사 기반 홈서비스/렌탈 수요를 해석한다.
+- 어느 구를 먼저 공략할지, 어떤 강도로 집행할지, 어떤 운영 액션이 필요한지 제안한다.
+
 반드시 지킬 규칙:
 1) 아래 CONTEXT 밖의 사실은 만들지 말 것.
 2) 숫자는 CONTEXT에 있는 경우에만 사용할 것.
@@ -442,14 +516,63 @@ CONTEXT:
 def _fallback_complete(prompt: str) -> dict:
     """Fallback to SNOWFLAKE.CORTEX.COMPLETE when AI_COMPLETE is unavailable."""
     try:
-        safe_prompt = prompt.replace("'", "''").replace("\\", "\\\\")
         rows = session.sql(
-            f"SELECT SNOWFLAKE.CORTEX.COMPLETE('{LLM_MODEL}', '{safe_prompt}') AS R"
+            "SELECT SNOWFLAKE.CORTEX.COMPLETE(?, ?) AS R",
+            params=[LLM_MODEL, prompt],
         ).collect()
         answer = rows[0]["R"] if rows else "응답을 생성하지 못했습니다."
         return {"structured_output": {"answer": answer}}
     except Exception:  # noqa: BLE001
         return {"structured_output": {"answer": "AI 호출 실패: 일시적 오류가 발생했습니다. 잠시 후 다시 시도해주세요."}}
+
+
+def search_policy_context(query: str, limit: int = 3) -> list:
+    """Retrieve grounded policy context from Cortex Search service."""
+    try:
+        safe_q = query.replace("'", "''")
+        rows = session.sql(
+            f"SELECT SNOWFLAKE.CORTEX.SEARCH_PREVIEW("
+            f"  '{SEARCH_SERVICE_FQN}',"
+            f"  '{safe_q}',"
+            f"  {limit}"
+            f") AS RESULTS"
+        ).collect()
+        if rows and rows[0]["RESULTS"]:
+            raw = rows[0]["RESULTS"]
+            return json.loads(raw) if isinstance(raw, str) else raw
+    except Exception:
+        pass
+    return []
+
+
+def generate_district_insight(snap: dict, district_name: str) -> str:
+    """Generate a concise insight callout for a district based on its signals."""
+    signals = []
+    net_move = safe_float(snap.get("NET_MOVE", 0))
+    if net_move > 0:
+        signals.append(f"전입 우위 (순이동 +{net_move:,.0f})")
+    elif net_move < 0:
+        signals.append(f"전출 우위 (순이동 {net_move:,.0f})")
+
+    sales_chg = safe_float(snap.get("SALES_CHG_PCT", 0))
+    if sales_chg > 3:
+        signals.append(f"소비 증가세 ({sales_chg:+.1f}%)")
+    elif sales_chg < -3:
+        signals.append(f"소비 감소세 ({sales_chg:+.1f}%)")
+
+    tourism = safe_float(snap.get("TOURISM_DEMAND_IDX", 0))
+    if tourism > 120:
+        signals.append(f"관광 수요 활발 ({tourism:.0f})")
+
+    stability = safe_float(snap.get("STABILITY_SCORE", 0))
+    if stability < 0.5:
+        signals.append("상권 불안정 주의")
+    elif stability > 0.8:
+        signals.append("상권 안정적")
+
+    if not signals:
+        return f"{district_name}: 전반적으로 안정적인 상태입니다."
+    return f"{district_name}: " + " | ".join(signals)
 
 
 # ---------------------------------------------------------------------------
@@ -486,18 +609,22 @@ header_col4.metric(
 # ---------------------------------------------------------------------------
 # Tabs
 # ---------------------------------------------------------------------------
-tabs = st.tabs(["Allocation", "Analysis", "AI Agent", "Simulation", "Ops / Trust"])
+tabs = st.tabs(["Capture Plan", "Move-in Signals", "AI Playbook", "Scenario Lab", "Ops / Trust"])
 
 # ===========================================================================
 # Tab 1: Allocation
 # ===========================================================================
 with tabs[0]:
     if next_ts is not None:
-        st.subheader(f"배분 추천 ({next_ts.strftime('%Y-%m')})")
+        st.subheader(f"다음 달 전입·이사 수요 캡처 우선순위 ({next_ts.strftime('%Y-%m')})")
     else:
-        st.subheader("배분 추천")
+        st.subheader("다음 달 전입·이사 수요 캡처 우선순위")
+    st.caption(
+        "각 구의 다음 달 수요 예측을 집행 강도로 변환한 캡처 플랜입니다. "
+        "마케팅뿐 아니라 설치 인력, 현장 운영, 오퍼 우선순위까지 연결할 수 있습니다."
+    )
 
-    # --- Allocation metrics ---
+    # --- Capture plan metrics ---
     if not alloc_df.empty:
         alloc_cols = st.columns(len(alloc_df))
         for idx, row in alloc_df.reset_index(drop=True).iterrows():
@@ -512,10 +639,26 @@ with tabs[0]:
     else:
         st.info("예측 데이터가 없습니다.")
 
-    # --- Actual vs Forecast overlay ---
+    # --- Actual vs Forecast overlay with confidence intervals ---
     st.subheader("Actual vs Forecast")
     if not overlay.empty:
         st.line_chart(overlay, height=360)
+        # Show confidence interval info
+        if not forecast_raw.empty and "LOWER_BOUND" in forecast_raw.columns:
+            ci_col1, ci_col2, ci_col3 = st.columns(3)
+            for idx, (_, frow) in enumerate(
+                forecast_raw.groupby("DISTRICT").first().iterrows()
+            ):
+                if idx < 3:
+                    col = [ci_col1, ci_col2, ci_col3][idx]
+                    lb = safe_float(frow.get("LOWER_BOUND", 0))
+                    ub = safe_float(frow.get("UPPER_BOUND", 0))
+                    fc = safe_float(frow.get("FORECAST", 0))
+                    col.metric(
+                        f"{frow.name} 95% CI",
+                        f"{fc:,.0f}",
+                        f"[{lb:,.0f} ~ {ub:,.0f}]",
+                    )
     else:
         st.info("비교 데이터가 없습니다.")
 
@@ -536,9 +679,10 @@ with tabs[0]:
             )
             st.bar_chart(ablation_pivot, height=300)
 
-            # Highlight improvement
+            # Highlight improvement with delta metrics
             if "DISTRICT" in ablation_raw.columns:
-                for district_name in districts:
+                delta_cols = st.columns(len(districts))
+                for d_idx, district_name in enumerate(districts):
                     district_abl = ablation_raw[
                         ablation_raw["DISTRICT"] == district_name
                     ].sort_values("MODEL")
@@ -546,10 +690,18 @@ with tabs[0]:
                         first_mape = safe_float(district_abl.iloc[0]["MAPE"])
                         last_mape = safe_float(district_abl.iloc[-1]["MAPE"])
                         if first_mape > 0:
-                            st.info(
-                                f"{district_name}: 외부 데이터 추가로 "
-                                f"MAPE {first_mape:.2f}% -> {last_mape:.2f}% 개선"
-                            )
+                            improve_pct = (first_mape - last_mape) / first_mape * 100
+                            with delta_cols[d_idx]:
+                                st.metric(
+                                    f"{district_name} MAPE 개선",
+                                    f"{last_mape:.2f}%",
+                                    f"{improve_pct:+.1f}% (A→E)",
+                                    delta_color="inverse",
+                                )
+                st.info(
+                    "Model A(스폰서 데이터만) → E(전체 외부 데이터 포함): "
+                    "공휴일·연령·관광·상권 데이터가 예측 정확도를 단계적으로 개선합니다."
+                )
 
             with st.expander("Ablation 상세 데이터"):
                 st.dataframe(ablation_raw, use_container_width=True)
@@ -599,19 +751,30 @@ with tabs[1]:
         else:
             snap = district_latest.iloc[0]
 
+            st.caption(
+                "전입·이사 수요를 설명하는 핵심 신호를 구별로 보여줍니다. "
+                "주거 이동, 소비 여력, 관광 유입, 상권 안정성을 한 화면에서 읽을 수 있습니다."
+            )
+
+            # District insight callout
+            insight_text = generate_district_insight(snap.to_dict(), analysis_district)
+            st.info(f"**핵심 인사이트**: {insight_text}")
+
             # --- Extended KPIs ---
             kpi_row1 = st.columns(4)
             kpi_row1[0].metric(
-                "유동인구",
-                fmt_int(snap.get("TOTAL_POP", 0)),
-                fmt_pct(snap.get("POP_CHG_PCT", 0)),
+                "전입 세대",
+                fmt_int(snap.get("MOVE_IN", 0)),
             )
             kpi_row1[1].metric(
+                "순이동",
+                fmt_int(snap.get("NET_MOVE", 0)),
+            )
+            kpi_row1[2].metric(
                 "카드소비 (억원)",
                 fmt_eok(snap.get("TOTAL_SALES", 0)),
                 fmt_pct(snap.get("SALES_CHG_PCT", 0)),
             )
-            kpi_row1[2].metric("순이동", fmt_int(snap.get("NET_MOVE", 0)))
             kpi_row1[3].metric("평균자산", fmt_int(snap.get("AVG_ASSET", 0)))
 
             kpi_row2 = st.columns(4)
@@ -752,10 +915,12 @@ with tabs[1]:
                 c
                 for c in [
                     "DISTRICT",
+                    "MOVE_IN",
+                    "MOVE_OUT",
+                    "NET_MOVE",
                     "TOTAL_POP",
                     "TOTAL_SALES",
                     "AVG_MEME_PRICE",
-                    "NET_MOVE",
                     "SALES_PER_POP",
                     "AGE_20_39_SHARE",
                     "SENIOR_60P_SHARE",
@@ -776,17 +941,17 @@ with tabs[1]:
 # Tab 3: AI Agent
 # ===========================================================================
 with tabs[2]:
-    st.subheader("DistrictPilot AI Agent")
+    st.subheader("DistrictPilot AI Playbook")
     st.caption(
         "Cortex Analyst(숫자) + AI_COMPLETE(액션) -- "
-        "인구/소비/부동산/관광/상권/인구구조 데이터 기반 의사결정"
+        "전입·이사, 소비, 자산, 관광, 상권 신호를 묶어 홈서비스/렌탈 액션으로 변환합니다."
     )
 
     with st.form("ai_form", clear_on_submit=False):
         ai_scope = st.selectbox("Scope", ["전체"] + districts, key="ai_scope")
         question = st.text_area(
             "질문 입력 (한국어 OK)",
-            placeholder="예: 다음 달 어디에 렌탈 예산을 더 배분해야 해?",
+            placeholder="예: 다음 달 어느 구의 전입 수요를 먼저 잡아야 하고, 어떤 액션이 필요해?",
         )
         submitted = st.form_submit_button("Ask DistrictPilot AI")
 
@@ -794,9 +959,9 @@ with tabs[2]:
     st.caption("추천 질문:")
     quick_cols = st.columns(3)
     quick_questions = [
-        "관광수요와 상권건강도를 고려한 예산 배분은?",
-        "고령층 비율이 높은 구에 어떤 전략이 필요할까?",
-        "외부 데이터 기반 3구 종합 평가해줘",
+        "전입 신호와 소비 신호를 같이 보면 어느 구를 먼저 공략해야 해?",
+        "어느 구에 설치 인력과 체험 오퍼를 먼저 배치해야 해?",
+        "3구 중 이사 직후 홈서비스 전환 가능성이 가장 높은 곳은 어디야?",
     ]
     for idx, qq_text in enumerate(quick_questions):
         if quick_cols[idx].button(qq_text, key=f"qq_{idx}"):
@@ -825,7 +990,7 @@ with tabs[2]:
         )
         alloc_pct_val = structured.get("allocation_pct")
         rec_col2.metric(
-            "추천 배분",
+            "추천 집행 강도",
             f"{float(alloc_pct_val):.1f}%"
             if alloc_pct_val is not None
             else "-",
@@ -842,6 +1007,20 @@ with tabs[2]:
         if structured.get("next_action"):
             st.success(f"**실행 액션**: {structured['next_action']}")
 
+        # Cortex Search grounding — show policy citations
+        grounding_results = search_policy_context(question if question else "전입 수요 캡처")
+        if grounding_results:
+            with st.expander("Cortex Search 근거 문서 (hallucination 방지)", expanded=False):
+                st.caption("AI 추천의 근거가 되는 정책/룰북 문서입니다.")
+                if isinstance(grounding_results, list):
+                    for g_idx, g_item in enumerate(grounding_results):
+                        if isinstance(g_item, dict):
+                            st.markdown(f"**[{g_idx+1}]** {g_item.get('CONTENT', g_item.get('content', str(g_item)))[:300]}...")
+                        else:
+                            st.markdown(f"**[{g_idx+1}]** {str(g_item)[:300]}...")
+                else:
+                    st.json(grounding_results)
+
         with st.expander("AI 상세 (컨텍스트 + 토큰)"):
             if usage:
                 st.write("Token usage:", usage)
@@ -851,12 +1030,12 @@ with tabs[2]:
 # Tab 4: Simulation
 # ===========================================================================
 with tabs[3]:
-    st.subheader("예산 배분 시뮬레이션")
-    st.caption("AI 추천과 사용자의 예산 배분을 비교합니다.")
+    st.subheader("전입 수요 캡처 시나리오")
+    st.caption("AI 캡처 플랜과 사용자의 집행 시나리오를 비교합니다.")
 
     # Budget input
     total_budget = st.slider(
-        "총 예산 (만원)",
+        "총 집행 예산 (만원)",
         min_value=1000,
         max_value=100000,
         value=30000,
@@ -870,7 +1049,7 @@ with tabs[3]:
     sim_col_input, sim_col_result = st.columns([1, 1])
 
     with sim_col_input:
-        st.markdown("**사용자 배분 설정**")
+        st.markdown("**사용자 집행 계획**")
 
         seocho_pct = st.slider(
             "서초구 (%)",
@@ -895,9 +1074,9 @@ with tabs[3]:
         # Validation
         total_pct = seocho_pct + yeongdeungpo_pct + junggu_pct
         if total_pct != 100:
-            st.error(f"배분 합계가 {total_pct}%입니다. 100%가 되어야 합니다.")
+            st.error(f"집행 비중 합계가 {total_pct}%입니다. 100%가 되어야 합니다.")
         else:
-            st.success("배분 합계: 100%")
+            st.success("집행 비중 합계: 100%")
 
     with sim_col_result:
         # AI recommended allocation
@@ -906,7 +1085,7 @@ with tabs[3]:
             for _, arow in alloc_df.iterrows():
                 ai_alloc[arow["DISTRICT"]] = safe_float(arow["ALLOC_PCT"])
 
-        st.markdown("**AI 추천 vs 사용자 시뮬레이션**")
+        st.markdown("**AI 캡처 플랜 vs 사용자 시나리오**")
 
         # Build comparison table
         user_alloc = {
@@ -924,8 +1103,8 @@ with tabs[3]:
             comparison_rows.append(
                 {
                     "구": district_name,
-                    "AI 추천 (%)": f"{ai_pct:.1f}",
-                    "사용자 (%)": f"{user_pct}",
+                    "AI 추천 집행 (%)": f"{ai_pct:.1f}",
+                    "사용자 집행 (%)": f"{user_pct}",
                     "AI 예산 (만원)": f"{ai_budget:,.0f}",
                     "사용자 예산 (만원)": f"{user_budget:,.0f}",
                     "차이 (만원)": f"{user_budget - ai_budget:+,.0f}",
@@ -934,6 +1113,17 @@ with tabs[3]:
 
         comparison_df = pd.DataFrame(comparison_rows)
         st.dataframe(comparison_df, use_container_width=True)
+
+        # Deviation alerts — warn when user allocation diverges significantly from AI
+        for crow in comparison_rows:
+            ai_val = float(crow["AI 추천 집행 (%)"])
+            user_val = float(crow["사용자 집행 (%)"])
+            diff = abs(user_val - ai_val)
+            if diff > 15:
+                st.warning(
+                    f"**{crow['구']}**: AI 추천 대비 {diff:.0f}%p 차이 — "
+                    f"{'과소 배정' if user_val < ai_val else '과다 배정'} 주의"
+                )
 
         # Visual comparison
         chart_data = pd.DataFrame(
@@ -949,7 +1139,7 @@ with tabs[3]:
         )
         st.bar_chart(chart_data, height=280)
 
-    # AI comment on user allocation
+    # AI comment on user scenario
     st.divider()
     if st.button("AI 코멘트 받기", key="sim_ai_comment_btn"):
         sim_context = json.dumps(
@@ -978,8 +1168,8 @@ with tabs[3]:
             indent=2,
         )
         sim_question = (
-            "사용자가 위와 같이 예산을 배분하려 합니다. "
-            "AI 추천 대비 어떤 리스크나 기회가 있는지 짧게 분석해주세요."
+            "사용자가 위와 같이 전입 수요 캡처 계획을 세우려 합니다. "
+            "AI 추천 대비 어떤 기회와 운영 리스크가 있는지 짧게 분석해주세요."
         )
         with st.spinner("AI 분석 중..."):
             sim_result = call_ai_complete(sim_question, sim_context)
@@ -1002,7 +1192,7 @@ with tabs[4]:
     try:
         session.sql(
             "ALTER SESSION SET QUERY_TAG = "
-            "'{\"app\":\"districtpilot_ai\",\"version\":\"v7\",\"tab\":\"ops_trust\"}'"
+            "'{\"app\":\"districtpilot_ai\",\"version\":\"v8\",\"tab\":\"ops_trust\"}'"
         ).collect()
     except Exception:
         pass
@@ -1065,6 +1255,11 @@ with tabs[4]:
     # --- Owner's Rights & Execution Context ---
     st.divider()
     st.subheader("실행 환경 증거")
+    live_obj_cols = st.columns(3)
+    live_obj_cols[0].metric("Feature Mart", active_feature_mart_name)
+    live_obj_cols[1].metric("Forecast Model", active_forecast_model_name)
+    live_obj_cols[2].metric("Semantic View", "DISTRICTPILOT_SV")
+
     exec_ctx = safe_read(
         "SELECT CURRENT_ROLE() AS ROLE, "
         "CURRENT_WAREHOUSE() AS WAREHOUSE, "
@@ -1118,12 +1313,12 @@ with tabs[4]:
             },
             {
                 "Layer": "Feature Store",
-                "Snowflake Object": "DT_FEATURE_MART_V2 (Dynamic Table)",
+                "Snowflake Object": f"DT_FEATURE_MART -> {active_feature_mart_name}",
                 "역할": "자동 갱신 Feature Mart (확장 컬럼 포함)",
             },
             {
                 "Layer": "ML",
-                "Snowflake Object": "DISTRICTPILOT_FORECAST (ML FORECAST)",
+                "Snowflake Object": f"{active_forecast_model_name} (ML FORECAST)",
                 "역할": "3개월 수요 예측 + Ablation 검증",
             },
             {
@@ -1179,13 +1374,13 @@ with tabs[4]:
     ext_data = pd.DataFrame(
         [
             {
-                "데이터 소스": "서울시 유동인구 (SPH)",
+                "데이터 소스": "SPH 유동인구/카드소비",
                 "라이선스": "Snowflake Marketplace",
                 "URL": "marketplace.snowflake.com",
                 "갱신 주기": "월 1회",
             },
             {
-                "데이터 소스": "카드 소비 데이터 (Richgo)",
+                "데이터 소스": "Richgo 부동산/인구이동",
                 "라이선스": "Snowflake Marketplace",
                 "URL": "marketplace.snowflake.com",
                 "갱신 주기": "월 1회",
@@ -1212,30 +1407,28 @@ with tabs[4]:
     )
     st.dataframe(ext_data, use_container_width=True)
 
-    # --- Dual use case ---
+    # --- Operator actions ---
     st.divider()
-    use_col_private, use_col_public = st.columns(2)
-    with use_col_private:
-        st.subheader("민간 활용")
+    use_col_acquire, use_col_operate = st.columns(2)
+    with use_col_acquire:
+        st.subheader("획득 전략")
         st.markdown(
             """
-- 렌탈/마케팅 예산 최적 배분
-- 신규 매장 출점 우선순위
-- 재고/설치 인력 배치
-- 채널별 ROI 시뮬레이션
-- 관광 시즌 대비 재고 사전 배치
-- 연령별 타겟 마케팅 전략 수립
+- 전입 직후 타깃 캠페인 우선순위
+- 구별 홈서비스/렌탈 오퍼 강도 조정
+- 체험 부스/제휴 채널 집행 계획
+- 상품 번들 및 온보딩 혜택 설계
+- B2B/B2C 혼합 지역 공략 순서 수립
 """
         )
-    with use_col_public:
-        st.subheader("공공 활용")
+    with use_col_operate:
+        st.subheader("운영 실행")
         st.markdown(
             """
-- 구청 상권 활성화 예산 배분
-- 소상공인 지원금 우선순위
-- 관광 인프라 배치 근거
-- 현장 점검 우선순위 산정
-- 고령 인구 복지 서비스 배치
-- 외국인 관광객 유입 정책 수립
+- 설치 가능 지역/시간대 사전 점검
+- 현장 설치 인력 및 재고 선배치
+- 관광/오피스 권역 운영 제약 반영
+- CS 대응과 고위험 구역 에스컬레이션
+- 월간 캠페인 후속 조정과 실험 예산 관리
 """
         )

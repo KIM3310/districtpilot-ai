@@ -16,7 +16,6 @@ SELECT
     DISTRICT,
     TOTAL_SALES AS Y,
     TOTAL_POP,
-    AVG_MEME_PRICE,
     NET_MOVE,
     AVG_ASSET,
     SALES_PER_POP
@@ -30,7 +29,7 @@ SELECT DISTRICT, MIN(DS) AS START_DT, MAX(DS) AS END_DT, COUNT(*) AS MONTHS
 FROM FORECAST_INPUT GROUP BY DISTRICT ORDER BY DISTRICT;
 
 -- ============================================================
--- 2. Snowflake ML FORECAST 모델 생성
+-- 2. Snowflake ML FORECAST 모델 생성 (외생변수 포함)
 -- ============================================================
 CREATE OR REPLACE SNOWFLAKE.ML.FORECAST DISTRICTPILOT_FORECAST(
     INPUT_DATA => SYSTEM$REFERENCE('TABLE', 'FORECAST_INPUT'),
@@ -40,11 +39,34 @@ CREATE OR REPLACE SNOWFLAKE.ML.FORECAST DISTRICTPILOT_FORECAST(
 );
 
 -- ============================================================
--- 3. 예측 실행 (3개월)
+-- 3. 미래 외생변수 테이블 생성 + 예측 실행 (3개월)
 -- ============================================================
+-- 미래 3개월의 외생변수 값을 마지막 관측값으로 forward-fill
+CREATE OR REPLACE TABLE FORECAST_INPUT_FUTURE AS
+WITH last_vals AS (
+    SELECT DISTRICT, TOTAL_POP, NET_MOVE, AVG_ASSET, SALES_PER_POP,
+           MAX(DS) AS LAST_DS
+    FROM FORECAST_INPUT
+    GROUP BY DISTRICT, TOTAL_POP, NET_MOVE, AVG_ASSET, SALES_PER_POP
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY DISTRICT ORDER BY MAX(DS) DESC) = 1
+)
+SELECT
+    DATEADD(MONTH, s.SEQ + 1, l.LAST_DS) AS DS,
+    l.DISTRICT,
+    l.TOTAL_POP,
+    l.NET_MOVE,
+    l.AVG_ASSET,
+    l.SALES_PER_POP
+FROM last_vals l,
+     TABLE(GENERATOR(ROWCOUNT => 3)) t,
+     LATERAL (SELECT SEQ4() AS SEQ) s
+ORDER BY l.DISTRICT, DS;
+
+-- 외생변수 모델은 INPUT_DATA 방식으로 FORECAST 호출
 CALL DISTRICTPILOT_FORECAST!FORECAST(
-    FORECASTING_PERIODS => 3,
-    CONFIG_OBJECT => {'prediction_interval': 0.95}
+    INPUT_DATA => SYSTEM$REFERENCE('TABLE', 'FORECAST_INPUT_FUTURE'),
+    TIMESTAMP_COLNAME => 'DS',
+    SERIES_COLNAME => 'DISTRICT'
 );
 
 CREATE OR REPLACE TABLE FORECAST_RESULTS AS
@@ -53,7 +75,7 @@ SELECT * FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
 SELECT * FROM FORECAST_RESULTS ORDER BY SERIES, TS;
 
 -- ============================================================
--- 4. Feature Importance
+-- 4. Feature Importance (외생변수 모델이므로 결과가 있음)
 -- ============================================================
 CALL DISTRICTPILOT_FORECAST!EXPLAIN_FEATURE_IMPORTANCE();
 

@@ -2,13 +2,12 @@
 
 ## Goal
 
-Submit a stable build that scores well on:
+Submit a stable build that scores well on (공식 심사 기준):
 
-- Creativity / originality
-- Snowflake platform depth
-- AI / data rigor
-- Real-world operability
-- Presentation clarity
+- 문제 정의 및 접근법 (20점)
+- 기술 구현 (30점)
+- 결과 품질 및 인사이트 (30점)
+- 발표 품질 (20점)
 
 ## 15-Minute Preflight
 
@@ -16,19 +15,21 @@ Submit a stable build that scores well on:
 
 Run [`12_final_precheck.sql`](12_final_precheck.sql) in Snowsight and confirm:
 
+- `SHOW DATABASES LIKE 'DISTRICTPILOT_AI'` returns the target database
 - `DISTRICTPILOT_FORECAST_V2` or `DISTRICTPILOT_FORECAST` exists
-- `FEATURE_MART_V2`, `FORECAST_RESULTS`, `FEATURE_IMPORTANCE`, `ABLATION_RESULTS` row counts are non-zero
+- `FEATURE_MART_V3` (또는 V2), `FORECAST_RESULTS`, `FEATURE_IMPORTANCE`, `ABLATION_RESULTS`, `STG_TELECOM` row counts are non-zero
 - `DISTRICTPILOT_SV` validates successfully
 - `V_APP_HEALTH` returns rows
-- Streamlit app is listed in `SHOW STREAMLITS`
+- Streamlit app is listed in `SHOW STREAMLITS LIKE 'DISTRICTPILOT_APP'`
 - for a judge-facing smoke test, run [`14_judge_fastpath.sql`](14_judge_fastpath.sql) right after and keep that Snowsight tab open
+- if the app is missing, redeploy from the repo root with `snow streamlit deploy DISTRICTPILOT_APP --replace --open`
 
 ### 2. Streamlit app click-through
 
 Open the app and verify all five tabs:
 
 - `Capture Plan`: next-month capture intensity, overlay chart, ablation chart
-- `Move-in Signals`: move-in / spending / tourism / commercial signals, feature importance
+- `Move-in Signals`: 인사이트 콜아웃, move-in / spending / AJD 렌탈 신호 / tourism / commercial, feature importance
 - `AI Playbook`: one Korean prompt returns structured answer
 - `Scenario Lab`: slider comparison and AI comment both work
 - `Ops / Trust`: health evidence and semantic-view validation display
@@ -48,7 +49,7 @@ Confirm the following are ready:
 
 - sponsor raw data is not included in GitHub or ZIP
 - public data sources and licenses are documented
-- AJD is described as optional unless fully integrated
+- AJD는 합성 fallback으로 통합됨 (Production에서 실데이터 교체)
 - all submission artifacts are in Korean
 
 ## Demo Fail-Safe Order
