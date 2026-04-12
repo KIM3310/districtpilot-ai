@@ -567,11 +567,19 @@ CONTEXT:
         raw = rows[0]["RESPONSE"]
         if isinstance(raw, str):
             try:
-                return json.loads(raw)
+                parsed = json.loads(raw)
+                if isinstance(parsed, dict):
+                    return parsed
+                elif isinstance(parsed, list) and parsed:
+                    return parsed[0] if isinstance(parsed[0], dict) else {"structured_output": {"answer": str(parsed[0])}}
+                return {"structured_output": {"answer": str(parsed)}}
             except Exception:
                 return {"structured_output": {"answer": raw}}
-        return raw
-    except Exception:
+        elif isinstance(raw, dict):
+            return raw
+        else:
+            return {"structured_output": {"answer": str(raw)}}
+    except Exception as e:
         return _fallback_complete(prompt)
 
 
@@ -1104,7 +1112,16 @@ with tabs[2]:
         usage = payload.get("usage", {}) if isinstance(payload, dict) else {}
 
         st.subheader("AI Recommendation")
-        st.write(structured.get("answer", "응답이 없습니다."))
+        answer_text = structured.get("answer") or structured.get("ANSWER") or structured.get("response") or structured.get("R")
+        if not answer_text:
+            # Try to extract any string value from the dict
+            for v in structured.values():
+                if isinstance(v, str) and len(v) > 10:
+                    answer_text = v
+                    break
+        if not answer_text:
+            answer_text = json.dumps(structured, ensure_ascii=False, default=str)[:1000] if structured else "AI 응답을 파싱할 수 없습니다."
+        st.write(answer_text)
 
         rec_col1, rec_col2 = st.columns(2)
         rec_col1.metric(
