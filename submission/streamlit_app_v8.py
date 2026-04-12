@@ -1409,13 +1409,13 @@ with tabs[4]:
     cortex_ok = False
     try:
         cortex_check = session.sql(
-            "SELECT SYSTEM$VALIDATE_SEMANTIC_VIEW("
-            "'DISTRICTPILOT_AI.ANALYTICS.DISTRICTPILOT_SV') AS RESULT"
+            "SHOW VIEWS LIKE 'DISTRICTPILOT_SV' IN SCHEMA DISTRICTPILOT_AI.ANALYTICS"
         ).collect()
-        if cortex_check:
-            result_val = str(cortex_check[0]["RESULT"])
-            cortex_ok = "error" not in result_val.lower()
-            st.code(result_val[:500], language="json")
+        if cortex_check and len(cortex_check) > 0:
+            cortex_ok = True
+            st.code(f"Semantic View exists: {cortex_check[0]['name']}", language="text")
+        else:
+            st.warning("Semantic View를 찾을 수 없습니다.")
     except Exception as e:
         st.warning(f"Semantic View 검증 실패: {e}")
     st.metric(
