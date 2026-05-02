@@ -36,7 +36,7 @@ DELIVERABLE_DIR = ROOT / "deliverables"
 
 @dataclass
 class Scene:
-    key: str
+    scene_id: str
     title: str
     subtitle: str
     narration: str
@@ -46,7 +46,7 @@ class Scene:
 
 SCENES: List[Scene] = [
     Scene(
-        key="01_title",
+        scene_id="01_title",
         title="DistrictPilot AI",
         subtitle="Snowflake-Native Move-in Demand Orchestration Engine",
         narration=(
@@ -61,7 +61,7 @@ SCENES: List[Scene] = [
         visual="title",
     ),
     Scene(
-        key="02_data",
+        scene_id="02_data",
         title="Data Sources",
         subtitle="Marketplace 2종 + 공개데이터 + Optional AJD",
         narration=(
@@ -79,7 +79,7 @@ SCENES: List[Scene] = [
         visual="data",
     ),
     Scene(
-        key="03_architecture",
+        scene_id="03_architecture",
         title="Architecture",
         subtitle="한 계정 안에서 끝나는 Snowflake-native 파이프라인",
         narration=(
@@ -96,7 +96,7 @@ SCENES: List[Scene] = [
         visual="architecture",
     ),
     Scene(
-        key="04_validation",
+        scene_id="04_validation",
         title="Forecast Validation",
         subtitle="Ablation으로 MAPE 개선을 숫자로 증명",
         narration=(
@@ -114,7 +114,7 @@ SCENES: List[Scene] = [
         visual="validation",
     ),
     Scene(
-        key="05_allocation",
+        scene_id="05_allocation",
         title="Capture Plan Tab",
         subtitle="다음 달 전입·이사 수요 캡처 우선순위",
         narration=(
@@ -132,7 +132,7 @@ SCENES: List[Scene] = [
         visual="allocation",
     ),
     Scene(
-        key="06_analysis",
+        scene_id="06_analysis",
         title="Move-in Signals Tab",
         subtitle="왜 이 구가 높은지, 어떤 신호가 작동하는지",
         narration=(
@@ -149,7 +149,7 @@ SCENES: List[Scene] = [
         visual="analysis",
     ),
     Scene(
-        key="07_agent",
+        scene_id="07_agent",
         title="AI Playbook Tab",
         subtitle="Grounded Recommendation with Structured Output",
         narration=(
@@ -166,7 +166,7 @@ SCENES: List[Scene] = [
         visual="agent",
     ),
     Scene(
-        key="08_simulation",
+        scene_id="08_simulation",
         title="Scenario Lab Tab",
         subtitle="AI 추천안과 사용자 조정안을 비교",
         narration=(
@@ -183,7 +183,7 @@ SCENES: List[Scene] = [
         visual="simulation",
     ),
     Scene(
-        key="09_ops",
+        scene_id="09_ops",
         title="Ops / Trust Tab",
         subtitle="데모가 아니라 운영 가능한 앱이라는 증거",
         narration=(
@@ -201,7 +201,7 @@ SCENES: List[Scene] = [
         visual="ops",
     ),
     Scene(
-        key="10_depth",
+        scene_id="10_depth",
         title="Why Snowflake",
         subtitle="플랫폼 활용 깊이가 점수로 이어지는 구간",
         narration=(
@@ -219,7 +219,7 @@ SCENES: List[Scene] = [
         visual="depth",
     ),
     Scene(
-        key="11_impacts",
+        scene_id="11_impacts",
         title="One Engine, One Operating Loop",
         subtitle="획득 전략과 운영 실행을 하나로 연결",
         narration=(
@@ -235,7 +235,7 @@ SCENES: List[Scene] = [
         visual="impacts",
     ),
     Scene(
-        key="12_closing",
+        scene_id="12_closing",
         title="Submission Ready",
         subtitle="검증, 운영, 설명 가능성까지 갖춘 제출물",
         narration=(
@@ -329,7 +329,7 @@ def draw_bullets(draw: ImageDraw.ImageDraw, bullets: Sequence[str]) -> None:
 
 
 def draw_footer(draw: ImageDraw.ImageDraw, scene: Scene) -> None:
-    footer = f"{scene.key.replace('_', ' ').upper()}  |  DistrictPilot AI  |  github.com/KIM3310"
+    footer = f"{scene.scene_id.replace('_', ' ').upper()}  |  DistrictPilot AI  |  github.com/KIM3310"
     draw.text((92, 1000), footer, font=SMALL_FONT, fill=(145, 160, 204))
 
 
@@ -570,13 +570,13 @@ def render_scene(scene: Scene) -> Path:
         draw.text((1050, 700), "README / PPT / Demo video aligned", font=get_font(34), fill=MUTED)
 
     draw_footer(draw, scene)
-    out = ASSET_DIR / f"{scene.key}.png"
+    out = ASSET_DIR / f"{scene.scene_id}.png"
     image.save(out)
     return out
 
 
 def synthesize_voice(scene: Scene) -> Path:
-    out = ASSET_DIR / f"{scene.key}.aiff"
+    out = ASSET_DIR / f"{scene.scene_id}.aiff"
     subprocess.run(
         [
             "say",
