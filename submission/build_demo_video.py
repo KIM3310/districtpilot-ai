@@ -30,7 +30,7 @@ GREEN = (94, 214, 132)
 RED = (255, 99, 132)
 GRID = (61, 79, 138)
 
-ROOT = Path("/Users/pizza/districtpilot-ai")
+ROOT = Path(os.environ.get("DISTRICTPILOT_ROOT", Path(__file__).resolve().parents[1])).resolve()
 ASSET_DIR = ROOT / "video_assets"
 DELIVERABLE_DIR = ROOT / "deliverables"
 
