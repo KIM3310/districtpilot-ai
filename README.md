@@ -8,6 +8,18 @@
 > **Snowflake Korea Hackathon 2026 - Tech Track**
 > 이사 직후 72시간 골든타임 — 홈서비스 수요를 예측하고 구별 집행 액션을 추천하는 Snowflake-native AI 에이전트
 
+## Product and Review Surface
+
+A district operations planner that converts forecasting into action cards, monitoring, and local decision support.
+
+| Lens | Definition |
+|---|---|
+| Buyer or user | Local governments, operations planners, civic analytics teams, and field-service coordinators. |
+| Commercial route | Sell as a planning dashboard pilot, forecast review workshop, or operations monitoring starter for districts. |
+| Review signal | Demand forecasting, action cards, Streamlit/Snowflake/Cortex framing, semantic views, and decision-agent patterns. |
+| Safety boundary | Forecasts are decision support; public-sector use needs transparent assumptions, data lineage, and human review. |
+| Fast proof | Run the local app/tests and inspect forecast outputs, action cards, and monitoring views. |
+
 ## Problem
 
 "다음 달 서초/영등포/중구 중 어디에 홈서비스 설치 인력을 먼저 배치하고, 어떤 강도로 집행해야 하는가?"
