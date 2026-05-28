@@ -27,6 +27,10 @@ A district operations planner that converts forecasting into action cards, monit
 - **Verification:** Run `python3 scripts/validate_repository_surface.py` and `python3 scripts/validate_architecture_blueprint.py` for repository-level checks.
 - **Commercial read:** Treat it as a district operations pilot that can sell forecast reviews, planning workshops, and monitoring setup.
 
+## Commercialization Playbook
+
+- [Monetization and GTM playbook](docs/monetization-playbook.md) maps the repository to buyer segments, offer ladder, pricing hypotheses, proof gates, and risk boundaries.
+
 ## Problem
 
 "다음 달 서초/영등포/중구 중 어디에 홈서비스 설치 인력을 먼저 배치하고, 어떤 강도로 집행해야 하는가?"
