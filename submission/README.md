@@ -80,7 +80,7 @@ Current live alignment:
 
 | 심사 항목 | 배점 | DistrictPilot AI 대응 |
 |----------|------|----------------------|
-| **비즈니스 임팩트** | **25%** | 연 700만 이사 × 72시간 골든타임. SPH+Richgo+AJD 3사 데이터가 이사 밸류체인 완벽 커버 |
+| **비즈니스 임팩트** | **25%** | 연 700만 이사 × 72시간 골든타임. SPH+Richgo+AJD 3사 데이터가 이사 밸류체인 주요 구간을 포괄 |
 | **기술 구현** | **25%** | Marketplace 3사 + ML FORECAST(외생변수) + Ablation 5모델 + AI_COMPLETE + DT + Tasks + Streamlit = 8개 Snowflake 기능 통합 |
 | **솔루션 완성도** | **20%** | 데이터 수집 → 예측 → 액션 추천 → 시뮬레이션 → 운영 모니터링 End-to-End 완결 |
 | **데이터 분석 & 인사이트** | **20%** | Feature Importance(외생변수 기여도) + Ablation(5모델 MAPE 비교) + 구별 인사이트 콜아웃 |
