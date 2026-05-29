@@ -31,6 +31,11 @@ A district operations planner that converts forecasting into action cards, monit
 
 - [Monetization and GTM playbook](docs/monetization-playbook.md) maps the repository to buyer segments, offer ladder, pricing hypotheses, proof gates, and risk boundaries.
 
+## Executive Proof Pack
+
+- [Reviewer evidence map](docs/reviewer-evidence-map.md) gives a 7-minute route through the strongest hiring, buyer, and architecture signals.
+- [Quality gate](docs/quality-gate.md) lists the local checks, CI surface, release boundary, and no-key/demo expectations for this repository.
+
 ## Problem
 
 "다음 달 서초/영등포/중구 중 어디에 홈서비스 설치 인력을 먼저 배치하고, 어떤 강도로 집행해야 하는가?"
