@@ -33,7 +33,7 @@ A district operations planner that converts forecasting into action cards, monit
 
 ## Executive Proof Pack
 
-- [Reviewer evidence map](docs/reviewer-evidence-map.md) gives a 7-minute route through the strongest hiring, buyer, and architecture signals.
+- [Reviewer evidence map](docs/reviewer-evidence-map.md) gives a 7-minute route through the strongest technical, buyer, and architecture signals.
 - [Quality gate](docs/quality-gate.md) lists the local checks, CI surface, release boundary, and no-key/demo expectations for this repository.
 
 ## Problem
