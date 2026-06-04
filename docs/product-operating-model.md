@@ -31,7 +31,7 @@ This repository is packaged as a concrete system surface, not a loose code sampl
 
 | Function | Standard |
 | --- | --- |
-| Local verification | `shared repository validators` |
+| Local verification | `make verify` |
 | Runtime stack | documentation and repository governance |
 | Demo readiness | README, architecture docs, and proof assets should explain the first five minutes of evaluation. |
 | Support handoff | Capture setup, known limits, recovery steps, and customer-specific extension points before a paid pilot. |
