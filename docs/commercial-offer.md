@@ -12,7 +12,7 @@ This is the buyer-ready version of the repository. It turns the technical proof 
 | Buyer | Local governments, field-service planners, civic analytics teams, and district operators. |
 | Pain wedge | Forecast-to-action cards for move-in/home-service demand and district resource planning. |
 | Front-door offer | Planning dashboard pilot |
-| Entry scope | $5k-$15k workshop |
+| Entry scope | Scope after buyer intake |
 | Proof before pitch | Judge fast path works |
 | Next buyer action | Review one proof artifact, then choose diagnostic, workshop, pilot, support, or revival path. |
 
@@ -20,9 +20,9 @@ This is the buyer-ready version of the repository. It turns the technical proof 
 
 | Offer | Scope assumption | Buyer-facing scope |
 |---|---|---|
-| Planning dashboard pilot | $5k-$15k workshop | Package 3 district case views |
+| Planning dashboard pilot | Scope after buyer intake | Package 3 district case views |
 | Forecast review workshop | buyer-approved implementation diagnostic | Create procurement-friendly one-pager |
-| Monthly operations monitoring setup | $3k-$12k/month monitoring | Offer planning workshop |
+| Monthly operations monitoring setup | Scope after buyer intake | Offer planning workshop |
 
 ## Close Path
 

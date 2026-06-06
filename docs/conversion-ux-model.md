@@ -49,9 +49,9 @@ This note specializes the repository for service launch. It combines product str
 
 ## Conversion Path
 
-- Risk-reversing entry: Planning dashboard pilot ($5k-$15k workshop) with one acceptance metric.
+- Risk-reversing entry: Planning dashboard pilot (scope after buyer intake) with one acceptance metric.
 - Pilot: Forecast review workshop (buyer-approved implementation diagnostic) using buyer-approved data and named operators.
-- Recurring layer: Monthly operations monitoring setup ($3k-$12k/month monitoring) for monitoring, governance, support, or managed review.
+- Recurring layer: Monthly operations monitoring setup (scope after buyer intake) for monitoring, governance, support, or managed review.
 
 ## Scope Frame
 
