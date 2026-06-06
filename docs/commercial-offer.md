@@ -12,16 +12,16 @@ This is the buyer-ready version of the repository. It turns the technical proof 
 | Buyer | Local governments, field-service planners, civic analytics teams, and district operators. |
 | Pain wedge | Forecast-to-action cards for move-in/home-service demand and district resource planning. |
 | Front-door offer | Planning dashboard pilot |
-| Entry price assumption | $5k-$15k workshop |
+| Entry scope | $5k-$15k workshop |
 | Proof before pitch | Judge fast path works |
 | Next buyer action | Review one proof artifact, then choose diagnostic, workshop, pilot, support, or revival path. |
 
 ## Packaged Offer Ladder
 
-| Offer | Price assumption | Buyer-facing scope |
+| Offer | Scope assumption | Buyer-facing scope |
 |---|---|---|
 | Planning dashboard pilot | $5k-$15k workshop | Package 3 district case views |
-| Forecast review workshop | $20k-$60k pilot | Create procurement-friendly one-pager |
+| Forecast review workshop | buyer-approved implementation diagnostic | Create procurement-friendly one-pager |
 | Monthly operations monitoring setup | $3k-$12k/month monitoring | Offer planning workshop |
 
 ## Close Path
@@ -35,7 +35,7 @@ This is the buyer-ready version of the repository. It turns the technical proof 
 - Cognitive fluency: one buyer, one painful workflow, one proof artifact, one next step.
 - Attention design: keep the primary CTA visible and remove side quests before the proof moment.
 - Risk reversal: make the first paid step small, time-boxed, and tied to acceptance criteria.
-- Proof before persuasion: show tests, demo output, scorecards, exports, or review packs before pricing.
+- Proof before persuasion: show tests, demo output, scorecards, exports, or review packs before scope discussion.
 - Autonomy: make opt-in, data boundaries, cancellation, and unsupported claims visible.
 - Commitment: end the buyer conversation with a written pilot checklist the buyer can share internally.
 
@@ -61,9 +61,9 @@ This is the buyer-ready version of the repository. It turns the technical proof 
 
 ## Guardrails
 
-- Do not invent customers, revenue, endorsements, logos, or certifications.
+- Do not invent customers, financial outcomes, endorsements, logos, or certifications.
 - Do not claim production readiness without scoped validation, data access, monitoring, and support ownership.
-- Do not use pressure tactics, fake scarcity, hidden continuity, or confusing pricing.
+- Do not use pressure tactics, fake scarcity, hidden continuity, or confusing scope.
 - Forecasts are decision support
 - Public-sector data lineage required
 - Human review must stay explicit
