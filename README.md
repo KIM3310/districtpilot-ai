@@ -1,5 +1,10 @@
 # DistrictPilot AI
 
+## Live Demo
+
+- [Open the public GitHub Pages demo](https://kim3310.github.io/districtpilot-ai/)
+- Scope: credential-free, synthetic-data demo for reviewers and evaluators.
+
 [![Snowflake](https://img.shields.io/badge/Snowflake-Native_App-29B5E8?logo=snowflake&logoColor=white)](https://www.snowflake.com/)
 [![Python](https://img.shields.io/badge/Python-3.8+-3776AB?logo=python&logoColor=white)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-in_Snowflake-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
