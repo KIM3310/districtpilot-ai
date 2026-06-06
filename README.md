@@ -282,7 +282,7 @@ python3 build_demo_video.py
 
 ## Cost
 
-~**$80/month** (Compute WH X-Small + Cortex LLM + Streamlit + Dynamic Tables)
+Use the Snowflake pricing calculator for the selected region, warehouse size, Cortex usage, Streamlit runtime, and Dynamic Tables refresh cadence. Keep the demo paused or scaled down when it is not under active review.
 
 ## Author
 
