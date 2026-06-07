@@ -43,13 +43,13 @@ Use this page as the short path through the repository. It keeps the review grou
 - Evidence chain is visible
 - Synthetic/real data boundaries are clear
 
-## Commercial Notes
+## Review Notes
 
 | Possible offer | Working scope assumption |
 |---|---|
-| Planning dashboard pilot | Scope after buyer intake |
-| Forecast review workshop | buyer-approved implementation diagnostic |
-| Monthly operations monitoring setup | Scope after buyer intake |
+| Planning dashboard pilot | Scope after reviewer intake |
+| Forecast review workshop | reviewer-approved implementation diagnostic |
+| Monthly operations monitoring setup | Scope after reviewer intake |
 
 ## Boundaries
 

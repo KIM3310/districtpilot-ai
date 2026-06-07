@@ -2,7 +2,7 @@
 
 Updated: 2026-05-30
 
-This note defines what an enterprise buyer, public-sector reviewer, serious user, or technical evaluator can safely infer from this repository today. It is intentionally conservative: public proof is separated from production claims.
+This note defines what an enterprise reviewer, public-sector reviewer, serious user, or technical evaluator can safely infer from this repository today. It is intentionally conservative: public proof is separated from production claims.
 
 ## Scope
 
@@ -10,7 +10,7 @@ This note defines what an enterprise buyer, public-sector reviewer, serious user
 |---|---|
 | Repository | `districtpilot-ai` |
 | Lane | B2G/B2B district operations analytics |
-| Primary reader or buyer | Local governments, field-service planners, civic analytics teams, and district operators. |
+| Primary reader or reviewer | Local governments, field-service planners, civic analytics teams, and district operators. |
 | Core wedge | Forecast-to-action cards for move-in/home-service demand and district resource planning. |
 | Stack | Documentation-first |
 | Readiness posture | Pilot-ready decision-support surface; production use requires procurement, data lineage, and human-review controls. |
@@ -19,12 +19,12 @@ This note defines what an enterprise buyer, public-sector reviewer, serious user
 
 | Control | Current expectation |
 |---|---|
-| Data boundary | Public artifacts should use demo, fixture, or synthetic data until the buyer approves data handling, retention, and access controls. |
+| Data boundary | Public artifacts should use demo, fixture, or synthetic data until the reviewer approves data handling, retention, and access controls. |
 | Identity and access | Pilot environments should use named roles, least privilege, approval records, and a clear public-sector data owner. |
 | Auditability | Keep decision logs, generated reports, CI results, eval outputs, and operator handoff artifacts reviewable. |
 | Observability | Track health checks, latency, error budget, cost, eval pass rate, audit-log completeness, and handoff/report generation status. |
 | Release gate | Review gate: Review README, CI workflow, docs, fixtures, and demo artifacts |
-| Support handoff | Name the owner, escalation path, rollback path, known limits, and review cadence before a paid or production pilot. |
+| Support handoff | Name the owner, escalation path, rollback path, known limits, and review cadence before a production testing. |
 
 ## Verification Surface
 
@@ -45,13 +45,13 @@ This note defines what an enterprise buyer, public-sector reviewer, serious user
 
 - Review README, CI workflow, docs, fixtures, and demo artifacts can be run or the equivalent CI gate is visible.
 - README, review guide, quality notes, service model, and this readiness note agree on the same scope.
-- Demo, fixture, synthetic, or public-data boundaries are explicit before a buyer sees outputs.
+- Demo, fixture, synthetic, or public-data boundaries are explicit before a reviewer sees outputs.
 - A reviewer can identify the first useful outcome without reading implementation details.
 - Production claims stay behind customer-specific validation, access control, monitoring, and support handoff.
 
 ## Integration Path
 
-- Run a synthetic-data walkthrough with the buyer and document the acceptance criteria.
+- Run a synthetic-data walkthrough with the reviewer and document the acceptance criteria.
 - Scope a controlled pilot using approved data, named users, secrets, and rollback paths.
 - Convert the pilot into an operating handoff with monitoring, review cadence, support owner, and renewal metric.
 
