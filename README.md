@@ -138,6 +138,11 @@ Current live alignment:
 | 한국관광 데이터랩 | 관광수요/외래객 지수 | 공공누리 1유형 | 합성: 계절 패턴 모사 |
 | 서울시 상권분석서비스 | 상권변화지표 | 공공누리 1유형 | 합성: 상권 안정성 트렌드 |
 
+### Public API Rollout Map
+
+[`15_public_api_integration_readiness.sql`](15_public_api_integration_readiness.sql) maps selected Korean public APIs from [public-apis-4Kr](https://github.com/yybmion/public-apis-4Kr) to DistrictPilot staging objects and feature usage.
+It keeps the current demo synthetic/reviewable while making live replacements explicit for KOSIS, data.go.kr, Seoul Open Data, TourAPI, KMA, AirKorea, and MOLIT-style housing signals.
+
 > **투명성 노트**: 외부 공개 데이터와 AJD 통신/렌탈 데이터는 해커톤 환경에서 공개 통계와
 > 도메인 지식 기반으로 현실적인 패턴을 재현한 합성 데이터입니다.
 > Production에서는 각 API/Marketplace 실데이터로 자동 교체되도록 파이프라인이 설계되어 있습니다.
@@ -159,6 +164,7 @@ districtpilot-ai/
 |-- 09_cortex_search_agent.sql      # Cortex Search + Agent
 |-- 10_external_data.sql            # 4개 외부 데이터 + FEATURE_MART_V2
 |-- 11_ablation_study.sql           # Ablation A->E (5 모델 비교)
+|-- 15_public_api_integration_readiness.sql # 공공 API -> Feature Mart 전환 지도
 |
 |-- Streamlit App --
 |-- streamlit_app_v8.py             # 최종 앱 (5탭)
@@ -192,6 +198,9 @@ districtpilot-ai/
 | `ABLATION_RESULTS` | Table/View | 5 모델 MAPE/SMAPE/MAE 비교 |
 | `DISTRICTPILOT_SV` | Semantic View | Cortex Analyst용 비즈니스 메트릭 (VQR 10개) |
 | `DISTRICTPILOT_SEARCH_SVC` | Cortex Search | 정책/룰북 문서 검색 |
+| `PUBLIC_API_SOURCE_REGISTRY` | Table | public-apis-4Kr 기반 공개 API 전환 지도 |
+| `V_PUBLIC_API_INTEGRATION_READINESS` | View | 공개 API별 Feature Mart 교체/확장 준비도 |
+| `V_PUBLIC_API_SIGNAL_GROUP_COVERAGE` | View | 신호 그룹별 API coverage와 필요한 secret 목록 |
 | `V_APP_HEALTH` | View | 운영 상태 모니터링 |
 
 ## Prerequisites
@@ -217,6 +226,9 @@ CREATE STAGE IF NOT EXISTS DISTRICTPILOT_AI.ANALYTICS.STREAMLIT_STAGE
 
 -- 2. External data + extended features
 10_external_data.sql
+
+-- 2.1. Public API live-readiness map
+15_public_api_integration_readiness.sql
 
 -- 2.5. AJD 통신/렌탈 통합
 08_ajd_integration.sql

@@ -19,6 +19,14 @@
 | 관광수요/외래객 지수 | 한국관광 데이터랩 | 시도/월별 | 2019-2024 | 관광 수요 Feature | 공공누리 1유형 (출처 표시) | https://datalab.visitkorea.or.kr |
 | 상권변화지표 | 서울시 상권분석서비스 | 구/분기별 | 2019-2024 | 상권 안정성 Feature | 공공누리 1유형 (출처 표시) | https://golmok.seoul.go.kr |
 
+## 공개 API 실데이터 전환 지도
+
+| Registry | Purpose | Catalog | Notes |
+|----------|---------|---------|-------|
+| `PUBLIC_API_SOURCE_REGISTRY` | 합성/공개 staging object를 어떤 Korean public API로 교체할지 추적 | https://github.com/yybmion/public-apis-4Kr | API 키 값은 저장하지 않고 필요한 secret 이름과 대상 feature만 기록 |
+| `V_PUBLIC_API_INTEGRATION_READINESS` | source별 readiness와 다음 검증 액션 확인 | public-apis-4Kr + 각 provider URL | fixture 검증 후 `FEATURE_MART_V2`/`FORECAST_INPUT_E` 재생성 |
+| `V_PUBLIC_API_SIGNAL_GROUP_COVERAGE` | calendar, demographics, move, tourism, commercial, housing, weather, environment coverage 확인 | public-apis-4Kr | optional enrichment는 ablation 후 활성화 |
+
 ## AJD 통신/렌탈 (통합 완료)
 
 | Dataset | Provider | Grain | Period | Purpose | License |

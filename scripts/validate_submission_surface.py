@@ -21,6 +21,7 @@ SQL_ARTIFACTS = [
     "12_final_precheck.sql",
     "13_live_app_compatibility_patch.sql",
     "14_judge_fastpath.sql",
+    "15_public_api_integration_readiness.sql",
     "MASTER_DEPLOY.sql",
 ]
 
