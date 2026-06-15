@@ -21,7 +21,7 @@ A district operations planner that converts forecasting into action cards, monit
 |---|---|
 | Audience | Local governments, operations planners, civic analytics teams, and field-service coordinators. |
 | Review path | Validate the demo, README, architecture notes, and quality gate before deeper workflow review. |
-| Review signal | Demand forecasting, action cards, Streamlit/Snowflake/Cortex framing, semantic views, and decision-agent patterns. |
+| Architecture signal | Demand forecasting, action cards, Streamlit/Snowflake/Cortex framing, semantic views, and decision-agent patterns. |
 | Safety boundary | Forecasts are decision support; public-sector use needs transparent assumptions, data lineage, and human review. |
 | Fast proof | Run the local app/tests and inspect forecast outputs, action cards, and monitoring views. |
 
@@ -313,6 +313,10 @@ This repository includes a neutral cloud and AI engineering blueprint that maps 
 ## Enterprise Productization
 
 - [Product operating model](docs/product-operating-model.md) defines the reviewer, trust boundary, trust boundary, operating checks, and service path for this repository.
+
+## System Architecture
+
+- [System architecture](docs/system-architecture.md) maps the runtime boundary, data/control flow, cloud or local deployment surface, and operating assumptions for this repository.
 
 ## Service Architecture
 
