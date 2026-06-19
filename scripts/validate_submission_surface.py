@@ -1,4 +1,4 @@
-"""Validate DistrictPilot submission artifacts stay reviewable offline."""
+"""Validate DistrictPilot submission artifacts stay inspectable offline."""
 
 from __future__ import annotations
 
