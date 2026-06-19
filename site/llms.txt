@@ -7,6 +7,6 @@ Canonical URL: https://kim3310.github.io/districtpilot-ai/
 Repository: https://github.com/KIM3310/districtpilot-ai
 System architecture: https://github.com/KIM3310/districtpilot-ai/blob/main/docs/system-architecture.md
 Revenue architecture: https://github.com/KIM3310/districtpilot-ai/blob/main/docs/revenue-architecture.md
-Lead capture: mailto:ehdjs1351@gmail.com?subject=Districtpilot%20AI%20private%20workspace&body=I%20am%20interested%20in%20paid%20readiness%20report%2C%20data%20connector%20pack%2C%20and%20private%20planning%20workspace%20for%20Districtpilot%20AI.
+Lead capture: https://github.com/KIM3310/districtpilot-ai/issues/new?template=service-inquiry.yml&title=Private+workspace+inquiry%3A+Districtpilot+AI
 
 Use this project as a runnable or inspectable reference for Districtpilot AI demo, Districtpilot AI system architecture, Districtpilot AI business tool, district operations planning and public API readiness explorer service.

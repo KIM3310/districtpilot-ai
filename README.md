@@ -329,7 +329,7 @@ This repository includes a neutral cloud and AI engineering blueprint that maps 
 - Public entry: public static district planning demo with architecture notes
 - Paid boundary: paid readiness report, data connector pack, and private planning workspace
 - Canonical URL: https://kim3310.github.io/districtpilot-ai/
-- Lead capture: mailto:ehdjs1351@gmail.com?subject=Districtpilot%20AI%20private%20workspace&body=I%20am%20interested%20in%20paid%20readiness%20report%2C%20data%20connector%20pack%2C%20and%20private%20planning%20workspace%20for%20Districtpilot%20AI.
+- Lead capture: https://github.com/KIM3310/districtpilot-ai/issues/new?template=service-inquiry.yml&title=Private+workspace+inquiry%3A+Districtpilot+AI
 - Machine-readable offer: [docs/service-offer.json](docs/service-offer.json)
 - Search growth implementation: [docs/search-growth-implementation.md](docs/search-growth-implementation.md)
 - Revenue architecture: [docs/revenue-architecture.md](docs/revenue-architecture.md)
