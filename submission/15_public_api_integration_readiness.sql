@@ -140,7 +140,7 @@ FROM VALUES
   );
 
 -- ============================================================
--- 2. Readiness view for operators and operators
+-- 2. Readiness view for reviewers and operators
 -- ============================================================
 
 CREATE OR REPLACE VIEW V_PUBLIC_API_INTEGRATION_READINESS AS

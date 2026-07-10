@@ -108,7 +108,7 @@ Current live alignment:
 ### Public API Rollout Map
 
 [`15_public_api_integration_readiness.sql`](15_public_api_integration_readiness.sql) maps selected Korean public APIs from [public-apis-4Kr](https://github.com/yybmion/public-apis-4Kr) to DistrictPilot staging objects and feature usage.
-It keeps the current demo synthetic/inspectable while making live replacements explicit for KOSIS, data.go.kr, Seoul Open Data, TourAPI, KMA, AirKorea, and MOLIT-style housing signals.
+It keeps the current demo synthetic and reviewable while making live replacements explicit for KOSIS, data.go.kr, Seoul Open Data, TourAPI, KMA, AirKorea, and MOLIT-style housing signals.
 
 > **투명성 노트**: 외부 공개 데이터와 AJD 통신/렌탈 데이터는 해커톤 환경에서 공개 통계와
 > 도메인 지식 기반으로 현실적인 패턴을 재현한 합성 데이터입니다.
@@ -257,7 +257,7 @@ python3 build_demo_video.py
 
 ## Cost
 
-Use the Snowflake pricing calculator for the selected region, warehouse size, Cortex usage, Streamlit runtime, and Dynamic Tables refresh cadence. Keep the demo paused or scaled down when it is not under active architecture.
+Use the Snowflake pricing calculator for the selected region, warehouse size, Cortex usage, Streamlit runtime, and Dynamic Tables refresh cadence. Keep the demo paused or scaled down when it is not under active review.
 
 ## Author
 

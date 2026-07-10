@@ -3,14 +3,14 @@
 ## Public Demo
 
 - URL: https://kim3310.github.io/districtpilot-ai/
-- Scope: credential-free synthetic demo surface for quick architecture inspection inspection.
+- Scope: credential-free synthetic demo surface for quick civic operations review.
 
 Repository: `districtpilot-ai`
-Last updated: 2026-06-03 KST
+Last reviewed: 2026-06-03 KST
 
 ## Enterprise Product Position
 
-District operations AI reference surface for public-service workflows, decision support, and inspectable automation boundaries.
+District operations AI reference surface for public-service workflows, decision support, and reviewable automation boundaries.
 
 This repository is packaged as a concrete system surface, not a loose code sample. The enterprise value is a narrow proof that can be inspected, run, tested, and converted into a scoped implementation motion.
 

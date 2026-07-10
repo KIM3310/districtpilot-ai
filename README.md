@@ -3,7 +3,7 @@
 ## Live Demo
 
 - [Open the public GitHub Pages demo](https://kim3310.github.io/districtpilot-ai/)
-- Scope: credential-free, synthetic-data demo for architecture inspection paths and evaluators.
+- Scope: credential-free, synthetic-data demo for civic operations review paths and evaluators.
 
 [![Snowflake](https://img.shields.io/badge/Snowflake-Native_App-29B5E8?logo=snowflake&logoColor=white)](https://www.snowflake.com/)
 [![Python](https://img.shields.io/badge/Python-3.8+-3776AB?logo=python&logoColor=white)](https://python.org)
@@ -13,31 +13,31 @@
 > **Snowflake Korea Hackathon 2026 - Tech Track**
 > 이사 직후 72시간 골든타임 — 홈서비스 수요를 예측하고 구별 집행 액션을 추천하는 Snowflake-native AI 에이전트
 
-## Product and System Surface
+## System Overview
 
 A district operations planner that converts forecasting into action cards, monitoring, and local decision support.
 
-| Lens | Definition |
+| Area | Details |
 |---|---|
-| Audience | Local governments, operations planners, civic analytics teams, and field-service coordinators. |
-| Architecture path | Validate the demo, README, architecture notes, and quality gate before deeper workflow architecture. |
-| System signal | Demand forecasting, action cards, Streamlit/Snowflake/Cortex framing, semantic views, and decision-agent patterns. |
-| Safety boundary | Forecasts are decision support; public-sector use needs transparent assumptions, data lineage, and human architecture. |
-| Fast path | Run the local app/tests and inspect forecast outputs, action cards, and monitoring views. |
+| Users | Local governments, operations planners, civic analytics teams, and field-service coordinators. |
+| Technical path | Validate the demo, README, architecture notes, and quality gate before deeper workflow review. |
+| System scope | Demand forecasting, action cards, Streamlit/Snowflake/Cortex framing, semantic views, and decision-agent patterns. |
+| Operating boundary | Forecasts are decision support; public-sector use needs transparent assumptions, data lineage, and human oversight. |
+| Evaluation path | Run the local app/tests and inspect forecast outputs, action cards, and monitoring views. |
 
-## System Fast Path
+## Evaluation Path
 
-- **First minute:** Read `JUDGE_FASTPATH.md`, then run `14_judge_fastpath.sql` in Snowsight to verify the live evidence chain.
+- **Start here:** Read `JUDGE_FASTPATH.md`, then run `14_judge_fastpath.sql` in Snowsight to verify the live evidence chain.
 - **Demo flow:** In Streamlit, move through `Capture Plan -> Move-in Signals -> AI Playbook -> Ops / Trust`.
-- **Verification:** Run `python3 scripts/validate_repository_surface.py` and `python3 scripts/validate_architecture_blueprint.py` for repository-level checks.
+- **Checks:** Run `python3 scripts/validate_repository_surface.py` and `python3 scripts/validate_architecture_blueprint.py` for repository-level checks.
 
 ## Service Launch Playbook
 
-- [Service launch playbook](docs/service-launch-playbook.md) maps the repository to architecture audiences, operating gates, operating boundaries, and risk controls.
+- [Service launch playbook](docs/service-launch-playbook.md) maps the repository to its product scope, operating gates, operating boundaries, and risk controls.
 
 ## Architecture Notes
 
-- [Architecture guide](docs/architecture-evidence-map.md) summarizes the project angle, first files to inspect, runtime commands, and known boundaries.
+- [Architecture guide](docs/architecture-evidence-map.md) summarizes the system scope, first files to inspect, runtime commands, and known boundaries.
 - [Quality notes](docs/quality-gate.md) lists the local checks, CI surface, and release expectations for this repository.
 - [Enterprise readiness notes](docs/enterprise-readiness.md) outlines security, data, operations, integration, and handoff expectations.
 
@@ -141,7 +141,7 @@ Current live alignment:
 ### Public API Rollout Map
 
 [`15_public_api_integration_readiness.sql`](15_public_api_integration_readiness.sql) maps selected Korean public APIs from [public-apis-4Kr](https://github.com/yybmion/public-apis-4Kr) to DistrictPilot staging objects and feature usage.
-It keeps the current demo synthetic/inspectable while making live replacements explicit for KOSIS, data.go.kr, Seoul Open Data, TourAPI, KMA, AirKorea, and MOLIT-style housing signals.
+It keeps the current demo synthetic and reviewable while making live replacements explicit for KOSIS, data.go.kr, Seoul Open Data, TourAPI, KMA, AirKorea, and MOLIT-style housing signals.
 
 > **투명성 노트**: 외부 공개 데이터와 AJD 통신/렌탈 데이터는 해커톤 환경에서 공개 통계와
 > 도메인 지식 기반으로 현실적인 패턴을 재현한 합성 데이터입니다.
@@ -290,7 +290,7 @@ python3 build_demo_video.py
 
 ## Cost
 
-Use the Snowflake pricing calculator for the selected region, warehouse size, Cortex usage, Streamlit runtime, and Dynamic Tables refresh cadence. Keep the demo paused or scaled down when it is not under active architecture.
+Use the Snowflake pricing calculator for the selected region, warehouse size, Cortex usage, Streamlit runtime, and Dynamic Tables refresh cadence. Keep the demo paused or scaled down when it is not under active review.
 
 ## Author
 
@@ -304,15 +304,13 @@ Use the Snowflake pricing calculator for the selected region, warehouse size, Co
 
 ## Cloud + AI Architecture
 
-This repository includes a neutral cloud and AI engineering blueprint that maps the current proof surface to runtime boundaries, data contracts, model-risk controls, deployment posture, and validation hooks.
-
 - [Cloud + AI architecture blueprint](docs/cloud-ai-architecture.md)
 - [Machine-readable architecture manifest](docs/architecture/blueprint.json)
 - Validation command: `python3 scripts/validate_architecture_blueprint.py`
 
 ## Enterprise Productization
 
-- [Product operating model](docs/product-operating-model.md) defines the architecture inspection, trust boundary, trust boundary, operating checks, and service path for this repository.
+- [Product operating model](docs/product-operating-model.md) defines the product scope, trust boundary, operating checks, and service path for this repository.
 
 ## System Architecture
 
