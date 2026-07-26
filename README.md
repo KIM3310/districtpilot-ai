@@ -328,6 +328,7 @@ Use the Snowflake pricing calculator for the selected region, warehouse size, Co
 - Paid boundary: paid readiness report, data connector pack, and private planning workspace
 - Canonical URL: https://kim3310.github.io/districtpilot-ai/
 - Lead capture: https://github.com/KIM3310/districtpilot-ai/issues/new?template=service-inquiry.yml&title=Private+workspace+inquiry%3A+Districtpilot+AI
+- Commercial route: https://kim3310-doeon-kim-portfolio.pages.dev/?offer=districtpilot-ai#service-offers
 - Machine-readable offer: [docs/service-offer.json](docs/service-offer.json)
 - Search growth implementation: [docs/search-growth-implementation.md](docs/search-growth-implementation.md)
 - Revenue architecture: [docs/revenue-architecture.md](docs/revenue-architecture.md)
