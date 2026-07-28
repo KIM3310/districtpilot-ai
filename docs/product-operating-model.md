@@ -2,7 +2,7 @@
 
 ## Public Demo
 
-- URL: https://kim3310.github.io/districtpilot-ai/
+- URL: https://districtpilot-ai.pages.dev/
 - Scope: credential-free synthetic demo surface for quick civic operations review.
 
 Repository: `districtpilot-ai`

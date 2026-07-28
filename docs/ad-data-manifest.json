@@ -6,7 +6,7 @@
   "audience": "civic analytics teams and data product owners",
   "public_resource": {
     "url": "https://kim3310-doeon-kim-portfolio.pages.dev/resources/districtpilot-ai/",
-    "live_demo": "https://kim3310.github.io/districtpilot-ai/",
+    "live_demo": "https://districtpilot-ai.pages.dev/",
     "readiness_checklist": [
       "Architecture Summary",
       "Runtime And Data Flow",

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://kim3310.github.io/districtpilot-ai/sitemap.xml
+Sitemap: https://districtpilot-ai.pages.dev/sitemap.xml

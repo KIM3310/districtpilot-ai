@@ -2,7 +2,7 @@
 
 ## Live Demo
 
-- [Open the public GitHub Pages demo](https://kim3310.github.io/districtpilot-ai/)
+- [Open the public GitHub Pages demo](https://districtpilot-ai.pages.dev/)
 - Scope: credential-free, synthetic-data demo for civic operations review paths and evaluators.
 
 [![Snowflake](https://img.shields.io/badge/Snowflake-Native_App-29B5E8?logo=snowflake&logoColor=white)](https://www.snowflake.com/)
@@ -326,7 +326,7 @@ Use the Snowflake pricing calculator for the selected region, warehouse size, Co
 
 - Public entry: public static district planning demo with architecture notes
 - Paid boundary: paid readiness report, data connector pack, and private planning workspace
-- Canonical URL: https://kim3310.github.io/districtpilot-ai/
+- Canonical URL: https://districtpilot-ai.pages.dev/
 - Lead capture: https://kim3310-doeon-kim-portfolio.pages.dev/?offer=districtpilot-ai&inquiry=private-ai-readiness-sprint#private-inquiry
 - Resource route: https://kim3310-doeon-kim-portfolio.pages.dev/resources/districtpilot-ai/
 - Commercial route: https://kim3310-doeon-kim-portfolio.pages.dev/?offer=districtpilot-ai#service-offers

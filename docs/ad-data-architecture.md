@@ -8,7 +8,7 @@ Free district analytics rollout worksheet for public-data feature marts and revi
 
 - Audience: civic analytics teams and data product owners
 - Central resource: https://kim3310-doeon-kim-portfolio.pages.dev/resources/districtpilot-ai/
-- Live system: https://kim3310.github.io/districtpilot-ai/
+- Live system: https://districtpilot-ai.pages.dev/
 - Advertising boundary: ads allowed only on public rollout explainers; civic data workspaces, exports, and dashboards are ad-free
 - Current ad state: code-ready on the central resource; serving depends on Google AdSense site approval and consent policy.
 

@@ -3,7 +3,7 @@
 Purpose: district operations planning and public API readiness explorer
 Free entry point: public static district planning demo with architecture notes
 Paid boundary: paid readiness report, data connector pack, and private planning workspace
-Canonical URL: https://kim3310.github.io/districtpilot-ai/
+Canonical URL: https://districtpilot-ai.pages.dev/
 Repository: https://github.com/KIM3310/districtpilot-ai
 System architecture: https://github.com/KIM3310/districtpilot-ai/blob/main/docs/system-architecture.md
 Revenue architecture: https://github.com/KIM3310/districtpilot-ai/blob/main/docs/revenue-architecture.md
