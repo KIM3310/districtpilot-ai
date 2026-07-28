@@ -253,7 +253,7 @@ python3 build_demo_video.py
 - **Evidence Chain**: Forecast -> Feature Importance -> Semantic View -> Search Grounding -> Structured Output -> Refresh State
 - **Domain Fit**: SPH(소비) + Richgo(이동) + AJD(렌탈/CS) 3사 데이터가 전입·이사 → 홈서비스 수요로 자연스럽게 수렴
 - **데이터 투명성**: 스폰서 실데이터 + 합성 외부 데이터를 명시적으로 구분, Production 교체 경로 제공
-- **Production-Ready**: Dynamic Tables (1h lag) + Tasks (daily/weekly) + Health monitoring + Query tags
+- **Snowflake deployment-readiness**: Dynamic Tables (1h lag), Tasks (daily/weekly), health monitoring, and query tags are prepared for a governed Snowflake deployment review.
 
 ## Cost
 

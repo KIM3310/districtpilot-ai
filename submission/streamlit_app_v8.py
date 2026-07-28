@@ -21,11 +21,16 @@ Features:
   - Deviation alerts in Scenario Lab
 """
 import json
+import logging
+import re
 from typing import List, Tuple
 
 import pandas as pd
 import streamlit as st
-from snowflake.snowpark.context import get_active_session
+
+from session_access import get_snowflake_session, in_streamlit_runtime
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Config constants
@@ -50,10 +55,9 @@ EVAL_METRICS_FQN = "DISTRICTPILOT_AI.ANALYTICS.EVAL_METRICS_A"
 FEATURE_IMPORTANCE_FQN = "DISTRICTPILOT_AI.ANALYTICS.FEATURE_IMPORTANCE"
 LLM_MODEL = "mistral-large2"
 SEARCH_SERVICE_FQN = "DISTRICTPILOT_AI.ANALYTICS.DISTRICTPILOT_SEARCH_SVC"
+_SNOWFLAKE_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_$]*$")
 
 DISTRICTS_KR = {"서초구": "서초구", "영등포구": "영등포구", "중구": "중구"}
-
-session = get_active_session()
 
 st.set_page_config(page_title="DistrictPilot AI", layout="wide")
 
@@ -132,28 +136,32 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-try:
-    session.sql(
-        "ALTER SESSION SET QUERY_TAG = "
-        "'{\"app\":\"districtpilot_ai\",\"version\":\"1.0\",\"entrypoint\":\"app_init\"}'"
-    ).collect()
-except Exception:
-    pass
+if in_streamlit_runtime():
+    try:
+        get_snowflake_session().sql(
+            "ALTER SESSION SET QUERY_TAG = "
+            "'{\"app\":\"districtpilot_ai\",\"version\":\"1.0\",\"entrypoint\":\"app_init\"}'"
+        ).collect()
+    except Exception:  # nosec B110
+        # App initialization remains best-effort outside fully provisioned Snowflake sessions.
+        pass
 
 # ---------------------------------------------------------------------------
 # Utility / helper functions
 # ---------------------------------------------------------------------------
 
 @st.cache_data(ttl=300, show_spinner=False)
-def load_df(_session, sql: str) -> pd.DataFrame:
+def load_df(sql: str) -> pd.DataFrame:
     """Cached SQL execution returning a pandas DataFrame."""
-    return _session.sql(sql).to_pandas()
+    return get_snowflake_session().sql(sql).to_pandas()
 
 
 def attempt_read(sql: str) -> Tuple[pd.DataFrame, bool]:
     """Execute SQL and return both the frame and whether execution succeeded."""
+    if not in_streamlit_runtime():
+        return pd.DataFrame(), False
     try:
-        return load_df(session, sql), True
+        return load_df(sql), True
     except Exception:  # noqa: BLE001 – intentional catch-all for resilient UI
         return pd.DataFrame(), False
 
@@ -215,51 +223,78 @@ def safe_float(value, default=0.0) -> float:
         return default
 
 
+def quote_snowflake_identifier_path(fqn: str) -> str:
+    """Quote a controlled Snowflake identifier path after strict validation."""
+    parts = fqn.split(".")
+    if len(parts) != 3 or not all(_SNOWFLAKE_IDENTIFIER_RE.fullmatch(p) for p in parts):
+        raise ValueError(f"invalid Snowflake identifier path: {fqn!r}")
+    return ".".join(f'"{part}"' for part in parts)
+
+
+def clamp_search_limit(limit: int, default: int = 3) -> int:
+    """Coerce Cortex Search result limit into the supported 1..10 range."""
+    try:
+        coerced = int(limit)
+    except (TypeError, ValueError, OverflowError):
+        coerced = default
+    return min(10, max(1, coerced))
+
+
 # ---------------------------------------------------------------------------
 # Data loading
 # ---------------------------------------------------------------------------
 
 feature_mart, active_feature_mart_fqn = resolve_first_usable(
     FEATURE_MART_CANDIDATES,
-    lambda fqn: f"SELECT * FROM {fqn} ORDER BY YM, DISTRICT",
+    # Bandit B608 rationale: FQN comes only from module constants in FEATURE_MART_CANDIDATES.
+    lambda fqn: f"SELECT * FROM {fqn} ORDER BY YM, DISTRICT",  # nosec B608
 )
 
-forecast_raw = safe_read(f"""
-    SELECT SERIES AS DISTRICT, TS, FORECAST, LOWER_BOUND, UPPER_BOUND
-    FROM {FORECAST_RESULTS_FQN}
-    ORDER BY TS, DISTRICT
-""")
+# Bandit B608 rationale: FQN is a module constant, not user-controlled text.
+forecast_raw = safe_read(
+    "SELECT SERIES AS DISTRICT, TS, FORECAST, LOWER_BOUND, UPPER_BOUND "
+    f"FROM {FORECAST_RESULTS_FQN} "  # nosec B608
+    "ORDER BY TS, DISTRICT"
+)
 
-avf_raw = safe_read(f"""
-    SELECT DISTRICT, DS, ACTUAL, FORECAST_VAL
-    FROM {AVF_FQN}
-    ORDER BY DS, DISTRICT
-""")
+# Bandit B608 rationale: FQN is a module constant, not user-controlled text.
+avf_raw = safe_read(
+    "SELECT DISTRICT, DS, ACTUAL, FORECAST_VAL "
+    f"FROM {AVF_FQN} "  # nosec B608
+    "ORDER BY DS, DISTRICT"
+)
 
 eval_raw, active_forecast_model_fqn = resolve_first_usable(
     FORECAST_MODEL_CANDIDATES,
-    lambda fqn: f"SELECT * FROM TABLE({fqn}!SHOW_EVALUATION_METRICS())",
+    # Bandit B608 rationale: FQN comes only from module constants in FORECAST_MODEL_CANDIDATES.
+    lambda fqn: f"SELECT * FROM TABLE({fqn}!SHOW_EVALUATION_METRICS())",  # nosec B608
 )
 eval_from_model = not eval_raw.empty
 if eval_raw.empty:
-    eval_raw = safe_read(f"SELECT * FROM {EVAL_METRICS_FQN}")
+    # Bandit B608 rationale: FQN is a module constant, not user-controlled text.
+    eval_raw = safe_read(f"SELECT * FROM {EVAL_METRICS_FQN}")  # nosec B608
 
 fi_raw, fi_model_fqn = resolve_first_usable(
     FORECAST_MODEL_CANDIDATES,
-    lambda fqn: f"SELECT * FROM TABLE({fqn}!EXPLAIN_FEATURE_IMPORTANCE())",
+    # Bandit B608 rationale: FQN comes only from module constants in FORECAST_MODEL_CANDIDATES.
+    lambda fqn: f"SELECT * FROM TABLE({fqn}!EXPLAIN_FEATURE_IMPORTANCE())",  # nosec B608
 )
 if fi_raw.empty:
-    fi_raw = safe_read(f"SELECT * FROM {FEATURE_IMPORTANCE_FQN}")
+    # Bandit B608 rationale: FQN is a module constant, not user-controlled text.
+    fi_raw = safe_read(f"SELECT * FROM {FEATURE_IMPORTANCE_FQN}")  # nosec B608
 elif not eval_from_model:
     active_forecast_model_fqn = fi_model_fqn
 
-health_raw = safe_read(f"SELECT * FROM {HEALTH_VIEW_FQN}")
+# Bandit B608 rationale: FQN is a module constant, not user-controlled text.
+health_raw = safe_read(f"SELECT * FROM {HEALTH_VIEW_FQN}")  # nosec B608
 
-ablation_raw = safe_read(f"SELECT * FROM {ABLATION_FQN}")
+# Bandit B608 rationale: FQN is a module constant, not user-controlled text.
+ablation_raw = safe_read(f"SELECT * FROM {ABLATION_FQN}")  # nosec B608
 
 if feature_mart.empty and forecast_raw.empty:
-    st.error("데이터 로딩 실패. 테이블명/권한을 확인하세요.")
-    st.stop()
+    if in_streamlit_runtime():
+        st.error("데이터 로딩 실패. 테이블명/권한을 확인하세요.")
+        st.stop()
 
 active_feature_mart_name = active_feature_mart_fqn.rsplit(".", maxsplit=1)[-1]
 active_forecast_model_name = active_forecast_model_fqn.rsplit(".", maxsplit=1)[-1]
@@ -559,7 +594,7 @@ CONTEXT:
 {"answer": "한국어 분석 답변", "recommended_district": "구 이름", "allocation_pct": 숫자, "drivers": ["요인1","요인2"], "risk": "리스크 설명", "next_action": "다음 액션"}"""
 
     try:
-        rows = session.sql(
+        rows = get_snowflake_session().sql(
             "SELECT SNOWFLAKE.CORTEX.COMPLETE(?, ?) AS R",
             params=[LLM_MODEL, structured_prompt],
         ).collect()
@@ -576,18 +611,19 @@ CONTEXT:
                 try:
                     parsed = json.loads(raw[json_start:json_end+1])
                     return {"structured_output": parsed}
-                except Exception:
+                except Exception:  # nosec B110
+                    # Non-JSON model responses fall back to plain answer text.
                     pass
             return {"structured_output": {"answer": raw, "recommended_district": "-", "allocation_pct": None, "drivers": [], "risk": "", "next_action": ""}}
         return {"structured_output": {"answer": str(raw), "recommended_district": "-", "allocation_pct": None, "drivers": [], "risk": "", "next_action": ""}}
-    except Exception as e:
+    except Exception:
         return _fallback_complete(prompt)
 
 
 def _fallback_complete(prompt: str) -> dict:
     """Fallback to SNOWFLAKE.CORTEX.COMPLETE when AI_COMPLETE is unavailable."""
     try:
-        rows = session.sql(
+        rows = get_snowflake_session().sql(
             "SELECT SNOWFLAKE.CORTEX.COMPLETE(?, ?) AS R",
             params=[LLM_MODEL, prompt],
         ).collect()
@@ -600,19 +636,27 @@ def _fallback_complete(prompt: str) -> dict:
 def search_policy_context(query: str, limit: int = 3) -> list:
     """Retrieve grounded policy context from Cortex Search service."""
     try:
-        safe_q = query.replace("'", "''")
-        rows = session.sql(
-            f"SELECT SNOWFLAKE.CORTEX.SEARCH_PREVIEW("
-            f"  '{SEARCH_SERVICE_FQN}',"
-            f"  '{safe_q}',"
-            f"  {limit}"
-            f") AS RESULTS"
+        quote_snowflake_identifier_path(SEARCH_SERVICE_FQN)
+        safe_limit = clamp_search_limit(limit)
+        query_parameters = json.dumps(
+            {"query": str(query or ""), "limit": safe_limit},
+            ensure_ascii=False,
+        )
+        rows = get_snowflake_session().sql(
+            "SELECT SNOWFLAKE.CORTEX.SEARCH_PREVIEW(?, ?) AS RESULTS",
+            params=[SEARCH_SERVICE_FQN, query_parameters],
         ).collect()
         if rows and rows[0]["RESULTS"]:
             raw = rows[0]["RESULTS"]
-            return json.loads(raw) if isinstance(raw, str) else raw
+            parsed = json.loads(raw) if isinstance(raw, str) else raw
+            if isinstance(parsed, dict):
+                parsed = parsed.get("results", [])
+            return parsed if isinstance(parsed, list) else []
     except Exception:
-        pass
+        logger.warning(
+            "Cortex Search preview failed; continuing without policy context",
+            exc_info=True,
+        )
     return []
 
 
@@ -1333,13 +1377,15 @@ with tabs[4]:
     st.subheader("운영 / 신뢰성 패널")
 
     # --- Query Tag: set session-level tag for audit trail ---
-    try:
-        session.sql(
-            "ALTER SESSION SET QUERY_TAG = "
-            "'{\"app\":\"districtpilot_ai\",\"version\":\"1.0\",\"tab\":\"ops_trust\"}'"
-        ).collect()
-    except Exception:
-        pass
+    if in_streamlit_runtime():
+        try:
+            get_snowflake_session().sql(
+                "ALTER SESSION SET QUERY_TAG = "
+                "'{\"app\":\"districtpilot_ai\",\"version\":\"1.0\",\"tab\":\"ops_trust\"}'"
+            ).collect()
+        except Exception:  # nosec B110
+            # Query tagging is telemetry-only and must not block the app.
+            pass
 
     # --- Health panel ---
     if not health_raw.empty:
@@ -1429,17 +1475,18 @@ with tabs[4]:
     st.divider()
     st.subheader("Cortex 권한 검증")
     cortex_ok = False
-    try:
-        cortex_check = session.sql(
-            "SHOW VIEWS LIKE 'DISTRICTPILOT_SV' IN SCHEMA DISTRICTPILOT_AI.ANALYTICS"
-        ).collect()
-        if cortex_check and len(cortex_check) > 0:
-            cortex_ok = True
-            st.code(f"Semantic View exists: {cortex_check[0]['name']}", language="text")
-        else:
-            st.warning("Semantic View를 찾을 수 없습니다.")
-    except Exception as e:
-        st.warning(f"Semantic View 검증 실패: {e}")
+    if in_streamlit_runtime():
+        try:
+            cortex_check = get_snowflake_session().sql(
+                "SHOW VIEWS LIKE 'DISTRICTPILOT_SV' IN SCHEMA DISTRICTPILOT_AI.ANALYTICS"
+            ).collect()
+            if cortex_check and len(cortex_check) > 0:
+                cortex_ok = True
+                st.code(f"Semantic View exists: {cortex_check[0]['name']}", language="text")
+            else:
+                st.warning("Semantic View를 찾을 수 없습니다.")
+        except Exception as e:
+            st.warning(f"Semantic View 검증 실패: {e}")
     st.metric(
         "Semantic View 유효성",
         "PASS" if cortex_ok else "CHECK NEEDED",

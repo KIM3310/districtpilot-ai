@@ -5,7 +5,7 @@
   "repository_url": "https://github.com/KIM3310/districtpilot-ai",
   "architecture_url": "https://github.com/KIM3310/districtpilot-ai/blob/main/docs/system-architecture.md",
   "revenue_architecture_url": "https://github.com/KIM3310/districtpilot-ai/blob/main/docs/revenue-architecture.md",
-  "lead_capture_url": "https://github.com/KIM3310/districtpilot-ai/issues/new?template=service-inquiry.yml&title=Private+workspace+inquiry%3A+Districtpilot+AI",
+  "lead_capture_url": "https://kim3310-doeon-kim-portfolio.pages.dev/?offer=districtpilot-ai&inquiry=private-ai-readiness-sprint#private-inquiry",
   "productized_offer": "district operations planning and public API readiness explorer",
   "first_paid_sku": "paid readiness report, data connector pack, and private planning workspace",
   "free_lead_magnet": "public static district planning demo with architecture notes",
@@ -64,7 +64,7 @@
         "@type": "Offer",
         "name": "paid readiness report, data connector pack, and private planning workspace",
         "availability": "https://schema.org/LimitedAvailability",
-        "url": "https://github.com/KIM3310/districtpilot-ai/blob/main/docs/revenue-architecture.md"
+        "url": "https://kim3310-doeon-kim-portfolio.pages.dev/?offer=districtpilot-ai&inquiry=private-ai-readiness-sprint#private-inquiry"
       }
     ],
     "isAccessibleForFree": true,
@@ -72,20 +72,20 @@
   },
   "commerce": {
     "gateway_url": "https://kim3310-doeon-kim-portfolio.pages.dev/?offer=districtpilot-ai#service-offers",
-    "lane_id": "nexus-data-contract-lab",
-    "lane_name": "Nexus Data Contract Lab",
+    "lane_id": "private-ai-readiness-sprint",
+    "lane_name": "Private AI Readiness Sprint",
     "billing_mode": "quote",
-    "price_unit": "scope-before-invoice for connector, warehouse, and audit-export work",
-    "fulfillment_kind": "connector readiness map, data-quality contract pack, export boundary, and migration report",
-    "risk_bucket": "data-high-trust",
+    "price_unit": "typical discovery scope from USD 2,500",
+    "fulfillment_kind": "use-case scorecard, data and policy boundaries, evaluation plan, deployment options, and go or no-go roadmap",
+    "risk_bucket": "high-trust-b2b",
     "checkout": {
-      "provider": "lemon-squeezy",
-      "status": "account-onboarding-required",
-      "fallback_url": "https://kim3310-doeon-kim-portfolio.pages.dev/?offer=districtpilot-ai#service-offers"
+      "provider": null,
+      "status": "not-configured",
+      "fallback_url": "https://kim3310-doeon-kim-portfolio.pages.dev/?offer=districtpilot-ai&inquiry=private-ai-readiness-sprint#private-inquiry"
     },
     "sponsorship": {
       "provider": "github-sponsors",
-      "eligible": true,
+      "eligible": false,
       "status": "sponsors-listing-not-configured"
     },
     "advertising": {

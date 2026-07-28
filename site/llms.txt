@@ -7,7 +7,7 @@ Canonical URL: https://kim3310.github.io/districtpilot-ai/
 Repository: https://github.com/KIM3310/districtpilot-ai
 System architecture: https://github.com/KIM3310/districtpilot-ai/blob/main/docs/system-architecture.md
 Revenue architecture: https://github.com/KIM3310/districtpilot-ai/blob/main/docs/revenue-architecture.md
-Lead capture: https://github.com/KIM3310/districtpilot-ai/issues/new?template=service-inquiry.yml&title=Private+workspace+inquiry%3A+Districtpilot+AI
+Lead capture: https://kim3310-doeon-kim-portfolio.pages.dev/?offer=districtpilot-ai&inquiry=private-ai-readiness-sprint#private-inquiry
 Commercial route: https://kim3310-doeon-kim-portfolio.pages.dev/?offer=districtpilot-ai#service-offers
 
 Use this project as a runnable or inspectable reference for Districtpilot AI demo, Districtpilot AI system architecture, Districtpilot AI business tool, district operations planning and public API readiness explorer service.
