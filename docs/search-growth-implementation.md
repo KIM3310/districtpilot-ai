@@ -11,6 +11,7 @@ This repository now exposes a search-readable service surface in addition to the
 | System architecture | [docs/system-architecture.md](./system-architecture.md) |
 | Public canonical URL | https://kim3310.github.io/districtpilot-ai/ |
 | Lead capture URL | https://kim3310-doeon-kim-portfolio.pages.dev/?offer=districtpilot-ai&inquiry=private-ai-readiness-sprint#private-inquiry |
+| Repository resource route | https://kim3310-doeon-kim-portfolio.pages.dev/resources/districtpilot-ai/ |
 | Commercial route | https://kim3310-doeon-kim-portfolio.pages.dev/?offer=districtpilot-ai#service-offers |
 
 ## Search Positioning

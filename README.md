@@ -328,9 +328,20 @@ Use the Snowflake pricing calculator for the selected region, warehouse size, Co
 - Paid boundary: paid readiness report, data connector pack, and private planning workspace
 - Canonical URL: https://kim3310.github.io/districtpilot-ai/
 - Lead capture: https://kim3310-doeon-kim-portfolio.pages.dev/?offer=districtpilot-ai&inquiry=private-ai-readiness-sprint#private-inquiry
+- Resource route: https://kim3310-doeon-kim-portfolio.pages.dev/resources/districtpilot-ai/
 - Commercial route: https://kim3310-doeon-kim-portfolio.pages.dev/?offer=districtpilot-ai#service-offers
 - Machine-readable offer: [docs/service-offer.json](docs/service-offer.json)
 - Search growth implementation: [docs/search-growth-implementation.md](docs/search-growth-implementation.md)
 - Revenue architecture: [docs/revenue-architecture.md](docs/revenue-architecture.md)
 
 <!-- search-growth-readme:end -->
+
+<!-- KIM3310:AD-DATA-PIVOT:START -->
+## Free Resource, Advertising, and Aggregate Data
+
+- [Public utility and architecture checklist](https://kim3310-doeon-kim-portfolio.pages.dev/resources/districtpilot-ai/)
+- Revenue model: contextual advertising on the policy-eligible central resource page.
+- Aggregate value: anonymous aggregate civic analytics rollout topic interest and worksheet usage counts
+- Boundary: ads allowed only on public rollout explainers; civic data workspaces, exports, and dashboards are ad-free
+- Consent defaults off, DNT/GPC fail closed, and personal or sensitive data is never sold.
+<!-- KIM3310:AD-DATA-PIVOT:END -->
