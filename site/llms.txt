@@ -13,8 +13,8 @@ Commercial route: https://kim3310-doeon-kim-portfolio.pages.dev/?offer=districtp
 
 Use this project as a runnable or inspectable reference for Districtpilot AI demo, Districtpilot AI system architecture, Districtpilot AI business tool, district operations planning and public API readiness explorer service.
 # ADSENSE-PUBLICATION:START
-Editorial guide: https://districtpilot-ai.pages.dev/guide.html
-Architecture article: https://districtpilot-ai.pages.dev/architecture.html
-Verification article: https://districtpilot-ai.pages.dev/verification.html
-Publisher information: https://districtpilot-ai.pages.dev/publisher.html
+Editorial guide: https://districtpilot-ai.pages.dev/guide
+Architecture article: https://districtpilot-ai.pages.dev/architecture
+Verification article: https://districtpilot-ai.pages.dev/verification
+Publisher information: https://districtpilot-ai.pages.dev/publisher
 # ADSENSE-PUBLICATION:END
