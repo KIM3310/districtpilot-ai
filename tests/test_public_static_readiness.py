@@ -16,14 +16,25 @@ def test_cloudflare_adsense_static_surface_is_ready() -> None:
 
     index = (ROOT / "site" / "index.html").read_text(encoding="utf-8")
     assert f'name="google-adsense-account" content="{adsense_client}"' in index
-    assert f"adsbygoogle.js?client={adsense_client}" in index
+    loader = f"adsbygoogle.js?client={adsense_client}"
+    assert loader not in index
 
-    for filename in ("privacy.html", "terms.html"):
-        assert (ROOT / "site" / filename).exists()
+    for filename in ("guide.html", "architecture.html", "verification.html"):
+        assert loader in (ROOT / "site" / filename).read_text(encoding="utf-8")
+    for filename in ("publisher.html", "privacy.html", "terms.html"):
+        html = (ROOT / "site" / filename).read_text(encoding="utf-8")
+        assert loader not in html
 
     sitemap = (ROOT / "site" / "sitemap.xml").read_text(encoding="utf-8")
-    assert "https://districtpilot-ai.pages.dev/privacy.html" in sitemap
-    assert "https://districtpilot-ai.pages.dev/terms.html" in sitemap
+    for filename in (
+        "guide.html",
+        "architecture.html",
+        "verification.html",
+        "publisher.html",
+        "privacy.html",
+        "terms.html",
+    ):
+        assert f"https://districtpilot-ai.pages.dev/{filename}" in sitemap
 
     llms = (ROOT / "site" / "llms.txt").read_text(encoding="utf-8")
     assert f"Canonical URL: {canonical}" in llms
