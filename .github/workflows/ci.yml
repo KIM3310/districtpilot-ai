@@ -19,10 +19,10 @@ jobs:
     name: Python lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.11"
 
@@ -49,7 +49,7 @@ jobs:
     name: SQL syntax check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - name: Install sqlfluff
         run: |
@@ -58,7 +58,9 @@ jobs:
 
       - name: sqlfluff parse (Snowflake dialect)
         run: |
-          sqlfluff parse --dialect snowflake --nofail *.sql || true
-          # Non-failing: many files use Snowflake-specific DDL and Cortex
-          # extensions that sqlfluff cannot yet fully model. We still run
-          # it so unrelated syntax regressions surface in PR diffs.
+          # sqlfluff accepts one path per invocation. Keep Snowflake parser
+          # gaps informational while allowing invocation/config errors to fail.
+          for file in ./*.sql; do
+            echo "Parsing ${file}"
+            sqlfluff parse --dialect snowflake --nofail "${file}"
+          done
