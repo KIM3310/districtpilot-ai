@@ -1,4 +1,6 @@
 """Generate DistrictPilot AI Hackathon PPT (final deck, dark navy theme)."""
+from pathlib import Path
+
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
@@ -456,5 +458,6 @@ add_text(s, "Doeon Kim  |  github.com/KIM3310", 0.5, 4.8, 12.3, 0.5, size=16, co
 add_text(s, "Q & A", 0.5, 5.8, 12.3, 0.8, size=36, bold=True, color=LIGHT_GRAY, align=PP_ALIGN.CENTER)
 
 # Save
-outpath = "/Users/pizza/districtpilot-ai/deliverables/DistrictPilot_AI_Hackathon_Final.pptx"
+outpath = Path(__file__).resolve().parent / "deliverables" / "DistrictPilot_AI_Hackathon_Final.pptx"
+outpath.parent.mkdir(parents=True, exist_ok=True)
 prs.save(outpath)
