@@ -2,13 +2,13 @@
 
 ## Live Demo
 
-- [Open the public GitHub Pages demo](https://districtpilot-ai.pages.dev/)
+- [Open the public Cloudflare Pages demo](https://districtpilot-ai.pages.dev/)
 - Scope: credential-free, synthetic-data demo for civic operations review paths and evaluators.
 
 [![Snowflake](https://img.shields.io/badge/Snowflake-Native_App-29B5E8?logo=snowflake&logoColor=white)](https://www.snowflake.com/)
 [![Python](https://img.shields.io/badge/Python-3.8+-3776AB?logo=python&logoColor=white)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-in_Snowflake-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Status](https://img.shields.io/badge/Status-Submission_Ready-brightgreen)]()
+**Status:** Snowflake Korea Hackathon 2026 submission repository; no placement or award outcome is claimed.
 
 > **Snowflake Korea Hackathon 2026 - Tech Track**
 > 이사 직후 72시간 골든타임 — 홈서비스 수요를 예측하고 구별 집행 액션을 추천하는 Snowflake-native AI 에이전트
@@ -19,8 +19,7 @@ A district operations planner that converts forecasting into action cards, monit
 
 | Area | Details |
 |---|---|
-| Users | Local governments, operations planners, civic analytics teams, and field-service coordinators. |
-| Technical path | Validate the demo, README, architecture notes, and quality gate before deeper workflow review. |
+| Users | Home-service growth teams, marketplace planners, and field-operations leaders allocating post-move installation capacity. |
 | System scope | Demand forecasting, action cards, Streamlit/Snowflake/Cortex framing, semantic views, and decision-agent patterns. |
 | Operating boundary | Forecasts are decision support; public-sector use needs transparent assumptions, data lineage, and human oversight. |
 | Evaluation path | Run the local app/tests and inspect forecast outputs, action cards, and monitoring views. |
