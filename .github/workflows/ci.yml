@@ -25,25 +25,24 @@ jobs:
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
 
-      - name: Install ruff + syntax deps
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff==0.9.0
+      - name: Install development dependencies
+        run: python -m pip install -r requirements-dev.txt
 
-      - name: Ruff lint (Python scripts only)
-        run: |
-          ruff check \
-            build_demo_video.py \
-            generate_pptx.py \
-            streamlit_app_v8.py
+      - name: Ruff lint
+        run: ruff check .
 
       - name: Python syntax check (compile-only)
         run: |
           python -m compileall -q \
             build_demo_video.py \
             generate_pptx.py \
-            streamlit_app_v8.py
+            streamlit_app_v8.py \
+            session_access.py \
+            scripts \
+            tests
 
   lint-sql:
     name: SQL syntax check
@@ -51,10 +50,15 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - name: Install sqlfluff
-        run: |
-          python -m pip install --upgrade pip
-          pip install "sqlfluff==3.2.5"
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install development dependencies
+        run: python -m pip install -r requirements-dev.txt
 
       - name: sqlfluff parse (Snowflake dialect)
         run: |
@@ -64,3 +68,20 @@ jobs:
             echo "Parsing ${file}"
             sqlfluff parse --dialect snowflake --nofail "${file}"
           done
+
+  verify:
+    name: Tests and repository validators
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Run complete verification suite
+        run: make verify PYTHON=python

@@ -16,7 +16,7 @@ These notes keep the repository easy to review without overstating what is produ
 
 | Purpose | Command |
 |---|---|
-| Review gate | `Review README fast path, CI workflow, and documented demo artifacts` |
+| Full local verification | `make verify` |
 
 ## CI
 
