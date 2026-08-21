@@ -1,5 +1,7 @@
 # DistrictPilot AI
 
+[![CI](https://github.com/KIM3310/districtpilot-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/KIM3310/districtpilot-ai/actions/workflows/ci.yml)
+
 ## Live Demo
 
 - [Open the public Cloudflare Pages demo](https://districtpilot-ai.pages.dev/)
@@ -28,7 +30,7 @@ A district operations planner that converts forecasting into action cards, monit
 
 - **Start here:** Read `JUDGE_FASTPATH.md`, then run `14_judge_fastpath.sql` in Snowsight to verify the live evidence chain.
 - **Demo flow:** In Streamlit, move through `Capture Plan -> Move-in Signals -> AI Playbook -> Ops / Trust`.
-- **Checks:** Run `python3 scripts/validate_repository_surface.py` and `python3 scripts/validate_architecture_blueprint.py` for repository-level checks.
+- **Checks:** Run `make verify` for the complete pytest suite plus submission, repository-surface, and architecture validation.
 
 ## Service Launch Playbook
 

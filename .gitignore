@@ -4,9 +4,11 @@ package-lock.json
 
 # Generated files
 .generated/
+.venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.ruff_cache/
 
 # Archives
 archive/
